@@ -3,11 +3,12 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
+import base64  # 🌟 로고 강제 밀착을 위한 도구 추가
 
 # ==========================================
-# 0. 웹페이지 기본 설정
+# 0. 웹페이지 기본 설정 (중복 오류 제거)
 # ==========================================
-st.set_page_config(page_title="오영 염료 통합 솔루션", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="오영 염료 통합 솔루션", page_icon="logo.png", layout="wide")
 
 # ==========================================
 # 1. 마스터 데이터 로드 (단일 파일)
@@ -25,24 +26,29 @@ def load_master_data():
 df = load_master_data()
 
 # ==========================================
-# 0. 웹페이지 기본 설정 (탭 아이콘 로고로 변경)
-# ==========================================
-# page_icon에 이모티콘 🧪 대신 "logo.png" 파일명을 적어줍니다.
-st.set_page_config(page_title="오영 염료 통합 솔루션", page_icon="logo.png", layout="wide")
-
-# (중략... 1번 데이터 로드 파트는 그대로 둡니다)
-
-# ==========================================
-# 2. 메인 화면 & 스펙 매칭 파트 (메인 화면 로고 띄우기)
+# 2. 메인 화면 & 스펙 매칭 파트 (HTML 로고 타이틀)
 # ==========================================
 if df is None:
     st.error("⚠️ `integrated_dyes_data.xlsx` 파일을 찾을 수 없습니다. 깃허브에 파일이 있는지 확인해 주세요.")
 else:
-    st.title("🧪 오영(OHYOUNG) 염료 통합 매칭 & 상용성 솔루션")
+    # 🌟 로고와 제목 글씨를 HTML/CSS로 강제 결합합니다.
+    if os.path.exists("logo.png"):
+        with open("logo.png", "rb") as f:
+            img_base64 = base64.b64encode(f.read()).decode()
+            
+        st.markdown(
+            f"""
+            <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                <img src="data:image/png;base64,{img_base64}" width="50" style="margin-right: 15px;">
+                <h1 style="margin: 0; padding: 0; font-size: 2.2rem; font-weight: 700;">오영(OHYOUNG) 염료 통합 매칭 & 상용성 솔루션</h1>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+    else:
+        st.title("🧪 오영(OHYOUNG) 염료 통합 매칭 & 상용성 솔루션")
 
     # --- 사이드바 UI: 필터링 조건 설정 ---
-    
-    # 🌟 여기에 'Created by' 문구를 추가했습니다! ('O-Young' 부분을 본인 이름으로 바꾸시면 됩니다)
     st.sidebar.markdown("<p style='text-align: left; color: #888888; font-size: 14px; margin-bottom: 20px;'>Created by tskwon 🧑‍🔬</p>", unsafe_allow_html=True)
     
     st.sidebar.header("1. 염료 그룹 선택 (다중 체크)")
@@ -89,23 +95,19 @@ else:
         st.subheader(f"✨ 검색 결과 (만족하는 염료: {len(filtered_df)}개)")
         st.write("💡 **아래 표의 첫 번째 열(`선택`)의 체크박스를 클릭하여 비교할 염료를 선택하세요.** (최대 3개 권장)")
         
-        # 🌟 핵심 로직: 데이터프레임 맨 앞에 '선택'이라는 체크박스용 열 추가
         filtered_df.insert(0, '선택', False)
         display_cols = ['선택', '염료그룹', '염료명'] + [c for c in criteria if c in filtered_df.columns]
         
-        # st.data_editor를 사용하여 체크박스 클릭을 인식하도록 설정
         edited_df = st.data_editor(
             filtered_df[display_cols],
             hide_index=True,
             use_container_width=True,
-            disabled=[col for col in display_cols if col != '선택'] # '선택' 열만 클릭 가능하게 설정
+            disabled=[col for col in display_cols if col != '선택']
         )
         
-        # 체크된 염료들만 추출
         selected_dyes_df = edited_df[edited_df['선택'] == True]
         selected_dye_names = selected_dyes_df['염료명'].tolist()
         
-        # 3개 초과 선택 시 경고 및 제한
         if len(selected_dye_names) > 3:
             st.warning("⚠️ 안정적인 그래프 비교를 위해 최대 3개까지만 표시됩니다.")
             selected_dye_names = selected_dye_names[:3]
@@ -119,7 +121,6 @@ else:
     if filtered_df.empty:
         st.info("💡 위의 검색 조건에 맞는 염료가 없습니다.")
     elif not selected_dye_names:
-        # 사용자가 표에서 아무것도 체크하지 않았을 때의 안내 문구
         st.info("👆 위 검색 결과 표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.")
     else:
         time_points = ['0', '5', '20', '25', '40', '80', '100']
@@ -132,7 +133,6 @@ else:
             
             with col1:
                 fig = go.Figure()
-                # 1선 노랑, 2선 빨강, 3선 파랑 고정
                 custom_colors = ['#FFD700', '#FF4B4B', '#1F77B4']
                 
                 for idx, name in enumerate(selected_dye_names):
