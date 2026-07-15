@@ -92,25 +92,39 @@ else:
                 filtered_df[criterion] = pd.to_numeric(filtered_df[criterion], errors='coerce')
                 filtered_df = filtered_df[filtered_df[criterion] >= min_value]
 
+        # ... 기존 코드 ...
         st.subheader(f"✨ 검색 결과 (만족하는 염료: {len(filtered_df)}개)")
         st.write("💡 **아래 표의 첫 번째 열(`선택`)의 체크박스를 클릭하여 비교할 염료를 선택하세요.** (최대 3개 권장)")
         
         filtered_df.insert(0, '선택', False)
         display_cols = ['선택', '염료그룹', '염료명'] + [c for c in criteria if c in filtered_df.columns]
         
+        # 🌟 컬럼 설정 (원래 이름 유지, 가로 길이 80픽셀로 통일)
+        col_configs = {
+            "선택": st.column_config.CheckboxColumn(width="small"),
+            "염료그룹": st.column_config.TextColumn(width=100),
+            "염료명": st.column_config.TextColumn(width=150)
+        }
+        
+        # 스펙 항목(일광, 땀일광 등)의 너비를 80으로 고정
+        for c in display_cols[3:]:
+            col_configs[c] = st.column_config.NumberColumn(width=80)
+        
         # 🌟 [수정] 클릭 순서를 저장할 세션 상태 초기화
         if "selected_order" not in st.session_state:
             st.session_state.selected_order = []
 
         edited_df = st.data_editor(
-            filtered_df[display_cols],
+            filtered_df[display_cols],  # 원본 이름 그대로 사용
             hide_index=True,
             use_container_width=True,
+            column_config=col_configs,
             disabled=[col for col in display_cols if col != '선택']
         )
         
         # 현재 체크박스가 켜져 있는 염료 목록 (표 순서대로 가져옴)
         currently_checked = edited_df[edited_df['선택'] == True]['염료명'].tolist()
+        # ... 이하 기존 코드 유지 ...
         
         # 🌟 [수정] 클릭 순서 동기화 로직
         # 1. 체크 해제된 항목은 세션 순서 목록에서 제거
