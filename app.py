@@ -72,11 +72,17 @@ else:
     st.sidebar.markdown("---")
     st.sidebar.header("2. 요구 스펙 설정 (이상)")
     
+    # 🌟 [수정 부분] 일광은 최대 7.0, 나머지는 최대 5.0으로 개별 슬라이더 설정
     criteria = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
     requirements = {}
     for c in criteria:
         if c in df.columns:
-            requirements[c] = st.sidebar.slider(c, 1.0, 6.0, 1.0, 0.5)
+            if c == '일광':
+                # 일광 슬라이더: 범위 1.0 ~ 7.0
+                requirements[c] = st.sidebar.slider(c, 1.0, 7.0, 1.0, 0.5)
+            else:
+                # 나머지 슬라이더: 범위 1.0 ~ 5.0
+                requirements[c] = st.sidebar.slider(c, 1.0, 5.0, 1.0, 0.5)
 
     # --- 데이터 필터링 및 표 선택 기능 ---
     st.header("🔍 1. 견뢰도 스펙 매칭 결과")
@@ -92,7 +98,6 @@ else:
                 filtered_df[criterion] = pd.to_numeric(filtered_df[criterion], errors='coerce')
                 filtered_df = filtered_df[filtered_df[criterion] >= min_value]
 
-        # ... 기존 코드 ...
         st.subheader(f"✨ 검색 결과 (만족하는 염료: {len(filtered_df)}개)")
         st.write("💡 **아래 표의 첫 번째 열(`선택`)의 체크박스를 클릭하여 비교할 염료를 선택하세요.** (최대 3개 권장)")
         
@@ -110,7 +115,7 @@ else:
         for c in display_cols[3:]:
             col_configs[c] = st.column_config.NumberColumn(width=80)
         
-        # 🌟 [수정] 클릭 순서를 저장할 세션 상태 초기화
+        # 🌟 클릭 순서를 저장할 세션 상태 초기화
         if "selected_order" not in st.session_state:
             st.session_state.selected_order = []
 
@@ -124,9 +129,8 @@ else:
         
         # 현재 체크박스가 켜져 있는 염료 목록 (표 순서대로 가져옴)
         currently_checked = edited_df[edited_df['선택'] == True]['염료명'].tolist()
-        # ... 이하 기존 코드 유지 ...
         
-        # 🌟 [수정] 클릭 순서 동기화 로직
+        # 클릭 순서 동기화 로직
         # 1. 체크 해제된 항목은 세션 순서 목록에서 제거
         st.session_state.selected_order = [
             dye for dye in st.session_state.selected_order if dye in currently_checked
