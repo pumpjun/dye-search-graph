@@ -98,6 +98,10 @@ else:
         filtered_df.insert(0, '선택', False)
         display_cols = ['선택', '염료그룹', '염료명'] + [c for c in criteria if c in filtered_df.columns]
         
+        # 🌟 [수정] 클릭 순서를 저장할 세션 상태 초기화
+        if "selected_order" not in st.session_state:
+            st.session_state.selected_order = []
+
         edited_df = st.data_editor(
             filtered_df[display_cols],
             hide_index=True,
@@ -105,12 +109,24 @@ else:
             disabled=[col for col in display_cols if col != '선택']
         )
         
-        selected_dyes_df = edited_df[edited_df['선택'] == True]
-        selected_dye_names = selected_dyes_df['염료명'].tolist()
+        # 현재 체크박스가 켜져 있는 염료 목록 (표 순서대로 가져옴)
+        currently_checked = edited_df[edited_df['선택'] == True]['염료명'].tolist()
         
-        if len(selected_dye_names) > 3:
-            st.warning("⚠️ 안정적인 그래프 비교를 위해 최대 3개까지만 표시됩니다.")
-            selected_dye_names = selected_dye_names[:3]
+        # 🌟 [수정] 클릭 순서 동기화 로직
+        # 1. 체크 해제된 항목은 세션 순서 목록에서 제거
+        st.session_state.selected_order = [
+            dye for dye in st.session_state.selected_order if dye in currently_checked
+        ]
+        # 2. 새로 체크된 항목은 세션 순서 목록의 맨 뒤에 추가 (클릭 순서대로 쌓임)
+        for dye in currently_checked:
+            if dye not in st.session_state.selected_order:
+                st.session_state.selected_order.append(dye)
+        
+        # 최종적으로 클릭 순서대로 정렬된 리스트에서 최대 3개 선택
+        selected_dye_names = st.session_state.selected_order[:3]
+        
+        if len(currently_checked) > 3:
+            st.warning("⚠️ 안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.")
 
     # ==========================================
     # 3. 상용성 그래프 시뮬레이션 파트 (다이렉트 연동)
@@ -133,6 +149,7 @@ else:
             
             with col1:
                 fig = go.Figure()
+                # 클릭 순서대로 할당될 색상 설정 (1번째: 노랑, 2번째: 빨강, 3번째: 파랑)
                 custom_colors = ['#FFD700', '#FF4B4B', '#1F77B4']
                 
                 for idx, name in enumerate(selected_dye_names):
@@ -174,6 +191,7 @@ else:
             with col2:
                 st.subheader("📋 수치 요약")
                 table_data = []
+                # 수치 요약 표도 그래프와 일관되게 클릭한 순서대로 출력하도록 수정
                 for name in selected_dye_names:
                     dye_row = df[df['염료명'] == name].iloc[0]
                     row_dict = {"염료명": name}
