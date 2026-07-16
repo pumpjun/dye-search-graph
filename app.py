@@ -143,7 +143,7 @@ t = {
     }
 }
 
-# 세션 상태 초기화 (기본 언어는 EN, 기본 탭은 tab3)
+# 세션 상태 초기화 (기본 언어는 EN, 기본 탭은 tab3 로 수정)
 if "lang" not in st.session_state:
     st.session_state.lang = "EN"
 lang = st.session_state.lang
@@ -205,7 +205,7 @@ if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" i
 
 st.sidebar.markdown("---")
 
-# 기준 항목 매핑 (공통) - 땀일광(알칼리) 버그 수정 완료!
+# 기준 항목 매핑 (공통)
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
@@ -216,22 +216,25 @@ criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산
 if st.session_state.app_mode == "tab1":
     @st.cache_data
     def load_spec_data():
-        if not os.path.exists("dyes_data.xlsx"): return None
-        df = pd.read_excel("dyes_data.xlsx")
-        df.columns = df.columns.str.strip()
+        if not os.path.exists("integrated_dyes_data.xlsx"): return None
+        df = pd.read_excel("integrated_dyes_data.xlsx")
+        df.columns = [str(col).strip() for col in df.columns]
         return df
     
     df1 = load_spec_data()
     if df1 is None:
-        st.error("⚠️ `dyes_data.xlsx` 파일이 없습니다.")
+        st.error("⚠️ `integrated_dyes_data.xlsx` 파일이 없습니다.")
     else:
+        # [사이드바 동적 렌더링 - 그룹 선택]
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups1 = list(df1['염료그룹'].dropna().unique()) if '염료그룹' in df1.columns else []
         
+        # 기본 체크값 설정 로직 (최초 실행 시 Sunfix SPD conc. 만 True)
         for g in all_groups1:
             if f"grp_{g}_tab1" not in st.session_state:
                 st.session_state[f"grp_{g}_tab1"] = True if g == "Sunfix SPD conc." else False
 
+        # 마스터 체크박스 (전체선택/해제)
         st.sidebar.checkbox(t[lang]["select_all"], value=False, key="chk_all_tab1", 
                             on_change=toggle_all_groups, args=("tab1", all_groups1))
         
@@ -243,14 +246,15 @@ if st.session_state.app_mode == "tab1":
                 selected_groups1.append(group)
         
         st.sidebar.markdown("---")
+        
+        # [사이드바 동적 렌더링 - 스펙 슬라이더]
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req1 = {}
         for c in criteria_list:
             if c in df1.columns:
                 display_label = t[lang][criteria_map.get(c, c)]
-                default_val = 4.0 if c == '일광' else 3.0
                 max_val = 7.0 if c == '일광' else 5.0
-                req1[c] = st.sidebar.slider(display_label, 1.0, max_val, default_val, 0.5, key=f"sld_{c}_tab1")
+                req1[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab1")
                 
         # [메인 화면 렌더링 - 안내 문구를 info 박스 안에 넣음]
         st.info(f"💡 **{t[lang]['instruction_text']}**")
@@ -320,6 +324,7 @@ elif st.session_state.app_mode == "tab2":
             app2_data = None
 
     if app2_data:
+        # [사이드바 동적 렌더링]
         st.sidebar.markdown(f"**{t[lang]['sb_dye_select']}**")
         selected_dyes2 = []
         for sheet_name, dyes in app2_data.items():
@@ -329,6 +334,7 @@ elif st.session_state.app_mode == "tab2":
                 for d in dyes:
                     if d["name"] == sel: selected_dyes2.append((sheet_name, d))
                     
+        # [메인 화면 렌더링]
         st.subheader(t[lang]["sim_hdr"])
         if not selected_dyes2:
             # 안내 문구 (Info 박스)
@@ -388,13 +394,16 @@ elif st.session_state.app_mode == "tab3":
     if df3 is None:
         st.error("⚠️ `integrated_dyes_data.xlsx` 파일이 없습니다.")
     else:
+        # [사이드바 동적 렌더링 - 그룹 선택]
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups3 = list(df3['염료그룹'].dropna().unique()) if '염료그룹' in df3.columns else []
         
+        # 기본 체크값 설정 로직 (최초 실행 시 Sunfix SPD conc. 만 True)
         for g in all_groups3:
             if f"grp_{g}_tab3" not in st.session_state:
                 st.session_state[f"grp_{g}_tab3"] = True if g == "Sunfix SPD conc." else False
 
+        # 마스터 체크박스 (전체선택/해제)
         st.sidebar.checkbox(t[lang]["select_all"], value=False, key="chk_all_tab3", 
                             on_change=toggle_all_groups, args=("tab3", all_groups3))
         
@@ -406,14 +415,15 @@ elif st.session_state.app_mode == "tab3":
                 selected_groups3.append(group)
                 
         st.sidebar.markdown("---")
+        
+        # [사이드바 동적 렌더링 - 스펙 슬라이더]
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req3 = {}
         for c in criteria_list:
             if c in df3.columns:
                 display_label = t[lang][criteria_map.get(c, c)]
-                default_val = 4.0 if c == '일광' else 3.0
                 max_val = 7.0 if c == '일광' else 5.0
-                req3[c] = st.sidebar.slider(display_label, 1.0, max_val, default_val, 0.5, key=f"sld_{c}_tab3")
+                req3[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab3")
 
         # [메인 화면 렌더링 - 상단 안내문구 Info 박스로 통일]
         st.info(f"💡 **{t[lang]['instruction_text']}**")
