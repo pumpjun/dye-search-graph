@@ -219,10 +219,6 @@ criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산
 # =====================================================================
 if st.session_state.app_mode == "tab1":
     @st.cache_data
-     
-
-
-
      def load_spec_data():
         if not os.path.exists("integrated_dyes_data.xlsx"): return None
         df = pd.read_excel("integrated_dyes_data.xlsx")
