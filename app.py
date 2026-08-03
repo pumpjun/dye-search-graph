@@ -11,7 +11,7 @@ import base64
 st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout="wide")
 
 # ==========================================
-# 1. 공통 로그인 기능 구현
+# 1. 공통 로그인 기능 구현 (Enter 키 지원되도록 st.form 적용)
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -40,16 +40,20 @@ if not st.session_state.logged_in:
             unsafe_allow_html=True
         )
         
-        login_id = st.text_input("아이디 (Username / ID)", placeholder="Enter ID")
-        login_pw = st.text_input("비밀번호 (Password)", type="password", placeholder="Enter Password")
-        st.write("")
-        
-        if st.button("로그인 (Log In)", use_container_width=True, type="primary"):
-            if login_id == "ohyoung" and login_pw == "5050":
-                st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.error("🚨 아이디 또는 비밀번호가 올바르지 않습니다. (Invalid ID or Password.)")
+        # st.form을 사용하여 Enter 키로 제출 가능하도록 수정
+        with st.form("login_form"):
+            login_id = st.text_input("아이디 (Username / ID)", placeholder="Enter ID")
+            login_pw = st.text_input("비밀번호 (Password)", type="password", placeholder="Enter Password")
+            st.write("")
+            
+            submitted = st.form_submit_button("로그인 (Log In)", use_container_width=True, type="primary")
+            
+            if submitted:
+                if login_id == "ohyoung" and login_pw == "5050":
+                    st.session_state.logged_in = True
+                    st.rerun()
+                else:
+                    st.error("🚨 아이디 또는 비밀번호가 올바르지 않습니다. (Invalid ID or Password.)")
                 
     st.stop()
 
@@ -143,7 +147,7 @@ t = {
     }
 }
 
-# 세션 상태 초기화 (기본 언어는 EN, 기본 탭은 tab3 로 수정)
+# 세션 상태 초기화
 if "lang" not in st.session_state:
     st.session_state.lang = "EN"
 lang = st.session_state.lang
@@ -229,7 +233,7 @@ if st.session_state.app_mode == "tab1":
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups1 = list(df1['염료그룹'].dropna().unique()) if '염료그룹' in df1.columns else []
         
-        # 기본 체크값 설정 로직 (최초 실행 시 Sunfix SPD conc. 만 True)
+        # 기본 체크값 설정 로직
         for g in all_groups1:
             if f"grp_{g}_tab1" not in st.session_state:
                 st.session_state[f"grp_{g}_tab1"] = True if g == "Sunfix SPD conc." else False
@@ -256,7 +260,7 @@ if st.session_state.app_mode == "tab1":
                 max_val = 7.0 if c == '일광' else 5.0
                 req1[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab1")
                 
-        # [메인 화면 렌더링 - 안내 문구를 info 박스 안에 넣음]
+        # [메인 화면 렌더링]
         st.info(f"💡 **{t[lang]['instruction_text']}**")
         
         if not selected_groups1:
@@ -271,10 +275,8 @@ if st.session_state.app_mode == "tab1":
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df1))}*")
             
-            # 표에 표시할 기본 컬럼과 견뢰도 컬럼만 추출
+            # 여기서 기본 정보와 견뢰도 컬럼만 추출하여 보여줌 (상용성 데이터 제외)
             disp_cols1 = ['염료그룹', '염료명'] + [c for c in criteria_list if c in f_df1.columns]
-            
-            # 추출한 컬럼만 표에 출력
             st.dataframe(f_df1[disp_cols1], hide_index=True, use_container_width=True)
 
 # =====================================================================
@@ -342,7 +344,6 @@ elif st.session_state.app_mode == "tab2":
         # [메인 화면 렌더링]
         st.subheader(t[lang]["sim_hdr"])
         if not selected_dyes2:
-            # 안내 문구 (Info 박스)
             st.info(f"💡 {t[lang]['select_prompt_tab3']}")
         else:
             fig2 = go.Figure()
@@ -359,7 +360,25 @@ elif st.session_state.app_mode == "tab2":
                 fig2.add_trace(go.Scatter(x=x1, y=y1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                 fig2.add_trace(go.Scatter(x=x2, y=y2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                 
-            fig2.update_layout(xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"], xaxis=dict(tickmode='array', tickvals=[0, 5, 20, 25, 40, 80, 100]), yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+            fig2.update_layout(
+                xaxis_title=t[lang]["xaxis"], 
+                yaxis_title=t[lang]["yaxis"], 
+                xaxis=dict(tickmode='array', tickvals=[0, 5, 20, 25, 40, 80, 100]), 
+                yaxis=dict(range=[0, 105]), 
+                hovermode="x unified", 
+                margin=dict(l=40, r=40, t=20, b=40), 
+                legend=dict(
+                    orientation="v",           
+                    yanchor="bottom",          # top에서 bottom으로 변경
+                    y=0.05,                    # 위치를 아래쪽으로 이동 (0.0이 맨 아래, 약간 여백을 위해 0.05)
+                    xanchor="right",           
+                    x=0.99,                    
+                    font=dict(size=16),        
+                    bgcolor="rgba(255, 255, 255, 0.8)",
+                    bordercolor="lightgray",
+                    borderwidth=1
+                )
+            )
             fig2.add_vline(x=20, line_dash="dash", line_color="gray")
             fig2.add_vline(x=25, line_dash="dash", line_color="gray")
             st.plotly_chart(fig2, use_container_width=True)
@@ -403,12 +422,10 @@ elif st.session_state.app_mode == "tab3":
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups3 = list(df3['염료그룹'].dropna().unique()) if '염료그룹' in df3.columns else []
         
-        # 기본 체크값 설정 로직 (최초 실행 시 Sunfix SPD conc. 만 True)
         for g in all_groups3:
             if f"grp_{g}_tab3" not in st.session_state:
                 st.session_state[f"grp_{g}_tab3"] = True if g == "Sunfix SPD conc." else False
 
-        # 마스터 체크박스 (전체선택/해제)
         st.sidebar.checkbox(t[lang]["select_all"], value=False, key="chk_all_tab3", 
                             on_change=toggle_all_groups, args=("tab3", all_groups3))
         
@@ -430,7 +447,6 @@ elif st.session_state.app_mode == "tab3":
                 max_val = 7.0 if c == '일광' else 5.0
                 req3[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab3")
 
-        # [메인 화면 렌더링 - 상단 안내문구 Info 박스로 통일]
         st.info(f"💡 **{t[lang]['instruction_text']}**")
         
         if not selected_groups3:
@@ -477,7 +493,6 @@ elif st.session_state.app_mode == "tab3":
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
-                # [그래프 하단 안내문구 Info 박스로 통일]
                 st.info(f"💡 {t[lang]['select_prompt']}")
             else:
                 time_pts3 = ['0', '5', '20', '25', '40', '80', '100']
@@ -499,7 +514,25 @@ elif st.session_state.app_mode == "tab3":
                         fig3.add_trace(go.Scatter(x=t_p1, y=v_p1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                         fig3.add_trace(go.Scatter(x=t_p2, y=v_p2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                         
-                    fig3.update_layout(xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"], xaxis=dict(tickmode='array', tickvals=[int(tc) for tc in val_cols3]), yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+                    fig3.update_layout(
+                        xaxis_title=t[lang]["xaxis"], 
+                        yaxis_title=t[lang]["yaxis"], 
+                        xaxis=dict(tickmode='array', tickvals=[int(tc) for tc in val_cols3]), 
+                        yaxis=dict(range=[0, 105]), 
+                        hovermode="x unified", 
+                        margin=dict(l=40, r=40, t=20, b=40), 
+                        legend=dict(
+                            orientation="v",           
+                            yanchor="bottom",          # top에서 bottom으로 변경
+                            y=0.05,                    # 위치를 아래쪽으로 이동
+                            xanchor="right",           
+                            x=0.99,                    
+                            font=dict(size=16),        
+                            bgcolor="rgba(255, 255, 255, 0.8)",
+                            bordercolor="lightgray",
+                            borderwidth=1
+                        )
+                    )
                     fig3.add_vline(x=20, line_dash="dash", line_color="gray")
                     fig3.add_vline(x=25, line_dash="dash", line_color="gray")
                     st.plotly_chart(fig3, use_container_width=True)
