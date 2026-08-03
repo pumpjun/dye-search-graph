@@ -275,8 +275,8 @@ if st.session_state.app_mode == "tab1":
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df1))}*")
             
-            # 여기서 기본 정보와 견뢰도 컬럼만 추출하여 보여줌 (상용성 데이터 제외)
-            disp_cols1 = ['염료그룹', '염료명'] + [c for c in criteria_list if c in f_df1.columns]
+            # '염료그룹'을 제외하고 '염료명'부터 표시
+            disp_cols1 = ['염료명'] + [c for c in criteria_list if c in f_df1.columns]
             st.dataframe(f_df1[disp_cols1], hide_index=True, use_container_width=True)
 
 # =====================================================================
@@ -463,11 +463,10 @@ elif st.session_state.app_mode == "tab3":
             st.write(t[lang]["search_res_desc"])
             
             f_df3.insert(0, '선택', False)
-            disp_cols3 = ['선택', '염료그룹', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
+            disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             
             col_configs3 = {
                 "선택": st.column_config.CheckboxColumn(label=t[lang]["col_select"], width="small"),
-                "염료그룹": st.column_config.TextColumn(label=t[lang]["col_group"], width=100),
                 "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=150)
             }
             for c in disp_cols3[3:]:
