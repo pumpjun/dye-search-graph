@@ -219,7 +219,11 @@ criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산
 # =====================================================================
 if st.session_state.app_mode == "tab1":
     @st.cache_data
-    def load_spec_data():
+     
+
+
+
+     def load_spec_data():
         if not os.path.exists("integrated_dyes_data.xlsx"): return None
         df = pd.read_excel("integrated_dyes_data.xlsx")
         df.columns = [str(col).strip() for col in df.columns]
@@ -351,7 +355,7 @@ elif st.session_state.app_mode == "tab2":
             
             for idx, (sheet_name, dye) in enumerate(selected_dyes2):
                 color = custom_colors2[idx % len(custom_colors2)]
-                label = f"[{sheet_name}] {dye['name']}"
+                label = f"{dye['name']}"  # 👈 [염료그룹] 부분을 삭제했습니다.
                 x1 = [t_val for t_val in dye["times"] if t_val <= 20]
                 y1 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val <= 20]
                 x2 = [t_val for t_val in dye["times"] if t_val >= 25]
@@ -504,7 +508,7 @@ elif st.session_state.app_mode == "tab3":
                     for idx, name in enumerate(sel_dyes3):
                         row = df3[df3['염료명'] == name].iloc[0]
                         color = colors[idx % len(colors)]
-                        label = f"[{row['염료그룹']}] {name}"
+                        label = f"{name}"  # 👈 [염료그룹] 부분을 삭제했습니다.
                         t_p1 = [tc for tc in val_cols3 if int(tc) <= 20]
                         v_p1 = [row[tc] for tc in t_p1]
                         t_p2 = [tc for tc in val_cols3 if int(tc) >= 25]
