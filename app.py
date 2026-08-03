@@ -270,7 +270,12 @@ if st.session_state.app_mode == "tab1":
                     
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df1))}*")
-            st.dataframe(f_df1, use_container_width=True)
+            
+            # 표에 표시할 기본 컬럼과 견뢰도 컬럼만 추출
+            disp_cols1 = ['염료그룹', '염료명'] + [c for c in criteria_list if c in f_df1.columns]
+            
+            # 추출한 컬럼만 표에 출력
+            st.dataframe(f_df1[disp_cols1], hide_index=True, use_container_width=True)
 
 # =====================================================================
 # [App 2] 상용성 그래프 단독
