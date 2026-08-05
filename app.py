@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 import base64
+import streamlit.components.v1 as components
 
 # ==========================================
 # 0. 웹페이지 기본 설정
@@ -462,6 +463,55 @@ elif st.session_state.app_mode == "tab3":
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df3))}*")
             st.write(t[lang]["search_res_desc"])
             
+            # ==========================================
+            # 🌟 [수정된 부분] 염료명 숨김 처리 & 클릭 시 색상이 변하는 커스텀 복사 버튼
+            # ==========================================
+            all_filtered_dyes = f_df3['염료명'].tolist()
+            dyes_to_copy_str = ",".join(all_filtered_dyes)
+            
+            button_label = "📋 Copy All Dye Names" if lang == "EN" else "📋 검색된 전체 염료명 복사하기"
+            success_label = "✅ Copied!" if lang == "EN" else "✅ 복사 완료! (프로그램 2에 붙여넣으세요)"
+
+            button_html = f"""
+            <button id="copy-btn" onclick="copyDyes()" style="
+                width: 100%;
+                background-color: #F0F2F6;
+                color: #31333F;
+                border: 1px solid #DCDCDC;
+                padding: 10px 20px;
+                text-align: center;
+                font-size: 16px;
+                font-weight: 600;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: 0.3s;
+            ">
+                {button_label}
+            </button>
+            <script>
+                function copyDyes() {{
+                    const textToCopy = "{dyes_to_copy_str}";
+                    navigator.clipboard.writeText(textToCopy).then(() => {{
+                        const btn = document.getElementById('copy-btn');
+                        btn.style.backgroundColor = '#4CAF50';  /* 성공 시 초록색으로 변경 */
+                        btn.style.color = 'white';
+                        btn.style.border = '1px solid #4CAF50';
+                        btn.innerText = "{success_label}";
+                        
+                        // 2초 뒤에 원래 색상으로 복구
+                        setTimeout(() => {{
+                            btn.style.backgroundColor = '#F0F2F6';
+                            btn.style.color = '#31333F';
+                            btn.style.border = '1px solid #DCDCDC';
+                            btn.innerText = "{button_label}";
+                        }}, 2000);
+                    }});
+                }}
+            </script>
+            """
+            components.html(button_html, height=60)
+            # ==========================================
+
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             
@@ -488,7 +538,7 @@ elif st.session_state.app_mode == "tab3":
             
             sel_dyes3 = st.session_state.tab3_selected_order[:3]
             if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"])
-            
+                                  
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
