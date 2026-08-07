@@ -7,12 +7,44 @@ import base64
 import streamlit.components.v1 as components
 
 # ==========================================
-# 0. 웹페이지 기본 설정
+# 0. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
 # ==========================================
 st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout="wide")
 
+# 깔끔한 폰트 대비, 하단 구분선, 사이드바 좌측 포인트 선 및 Material Icons 폰트 로드
+st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<style>
+    /* 메인 화면 제목 및 부제목 스타일링 */
+    h2, h3 {
+        font-weight: 700 !important;
+        color: #111 !important;
+    }
+    h3 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 24px;
+        margin-top: 10px;
+    }
+    /* 사이드바 텍스트(강조) 좌측 포인트 선 */
+    [data-testid="stSidebar"] p strong {
+        display: block;
+        border-left: 4px solid #007bff;
+        padding-left: 10px;
+        margin-top: 20px;
+        margin-bottom: 8px;
+        font-size: 16px;
+        color: #333;
+    }
+    /* 사이드바 구분선 여백 최적화 */
+    hr {
+        margin: 1.5em 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ==========================================
-# 1. 공통 로그인 기능 구현 (Enter 키 지원되도록 st.form 적용)
+# 1. 공통 로그인 기능 구현
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -20,7 +52,8 @@ if "logged_in" not in st.session_state:
 if not st.session_state.logged_in:
     _, login_col, _ = st.columns([1, 2, 1])
     with login_col:
-        login_logo_html = "🧪"
+        # 이모티콘 대신 Material Icon (science) 적용, 단 logo.png가 있으면 로고 우선
+        login_logo_html = "<span class='material-symbols-outlined' style='font-size:40px; color:#1E3A8A; vertical-align:middle; margin-right:10px;'>science</span>"
         if os.path.exists("logo.png"):
             with open("logo.png", "rb") as f:
                 login_img_base64 = base64.b64encode(f.read()).decode()
@@ -29,7 +62,7 @@ if not st.session_state.logged_in:
         st.markdown(
             f"""
             <div style="background-color:#f9f9f9; padding: 2.5rem; border-radius: 12px; border: 1px solid #ddd; margin-top: 100px; box-shadow: 0px 4px 10px rgba(0,0,0,0.05);">
-                <h2 style="text-align: center; margin-top: 0; margin-bottom: 20px; font-weight: 700; color: #1E3A8A;">
+                <h2 style="text-align: center; margin-top: 0; margin-bottom: 20px; font-weight: 700; color: #1E3A8A; border: none;">
                     {login_logo_html}Ohyoung Dye Finder Login
                 </h2>
                 <p style="text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 30px;">
@@ -41,7 +74,6 @@ if not st.session_state.logged_in:
             unsafe_allow_html=True
         )
         
-        # st.form을 사용하여 Enter 키로 제출 가능하도록 수정
         with st.form("login_form"):
             login_id = st.text_input("아이디 (Username / ID)", placeholder="Enter ID")
             login_pw = st.text_input("비밀번호 (Password)", type="password", placeholder="Enter Password")
@@ -54,7 +86,7 @@ if not st.session_state.logged_in:
                     st.session_state.logged_in = True
                     st.rerun()
                 else:
-                    st.error("🚨 아이디 또는 비밀번호가 올바르지 않습니다. (Invalid ID or Password.)")
+                    st.error("아이디 또는 비밀번호가 올바르지 않습니다. (Invalid ID or Password.)", icon=":material/error:")
                 
     st.stop()
 
@@ -64,37 +96,38 @@ if not st.session_state.logged_in:
 t = {
     "EN": {
         "header": "Ohyoung Dye Finder",
-        "created_by": "Created by tskwon 🧑‍🔬",
-        "logout_btn": "🔓 Log Out",
-        "menu_title": "📂 Select Program",
+        "created_by": "Created by tskwon :material/science:",
+        "logout_btn": ":material/logout: Log Out",
+        "menu_title": "Select Program",
+        # 메뉴 이름의 아이콘 제거
         "tab1": "1. Fastness Matcher",
         "tab2": "2. Compatibility Analyzer",
         "tab3": "3. Fastness & Compatibility",
         "instruction_text": "Please select the desired dye groups and fastness grades from the left sidebar.",
         "sb_group_title": "1. Select Dye Group",
-        "select_all": "✅ Select / Deselect All",
+        "select_all": "Select / Deselect All",
         "sb_spec_title": "2. Set Min Specs",
-        "sb_dye_select": "🎨 Select Dyes to Compare",
-        "spec_warn": "⚠️ Please select at least one dye group in the sidebar.",
-        "search_res_hdr": "🔍 Fastness Matching Results",
+        "sb_dye_select": "Select Dyes to Compare",
+        "spec_warn": "Please select at least one dye group in the sidebar.",
+        "search_res_hdr": ":material/manage_search: Fastness Matching Results",
         "search_res_sub": "Results (Matching Dyes: {count})",
         "search_res_desc": "**Click the checkbox in the first column (`Select`) to choose dyes for comparison.**",
         "col_select": "Select",
         "col_group": "Group",
         "col_name": "Dye Name",
-        "warn_limit": "⚠️ Only up to 3 selected dyes are shown in click order.",
-        "sim_hdr": "📈 Compatibility Simulation",
-        "no_match": "💡 No dyes match the criteria.",
+        "warn_limit": "Only up to 3 selected dyes are shown in click order.",
+        "sim_hdr": ":material/monitoring: Compatibility Simulation",
+        "no_match": "No dyes match the criteria.",
         "select_prompt": "Please check the **[Select]** checkbox above to compare dyes.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
         "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
-        "err_time_data": "⚠️ Time data columns are invalid.",
+        "err_time_data": "Time data columns are invalid.",
         "xaxis": "Process Time (min)",
         "yaxis": "Exhaustion / Fixation Rate (%)",
-        "summary_hdr": "📋 Numeric Summary",
-        "diag_hdr": "🔍 Field Diagnosis",
-        "diag_excel": "✅ **Excellent**\n\nBehaviors match closely. Low risk of tailing.",
-        "diag_warn": "⚠️ **Caution**\n\nMinor rate differences. Adjust temperature profile.",
-        "diag_danger": "🚨 **Danger**\n\nHigh risk of tailing/face-back in bulk production.",
+        "summary_hdr": ":material/dataset: Numeric Summary",
+        "diag_hdr": ":material/troubleshoot: Field Diagnosis",
+        "diag_excel": "**Excellent**\n\nBehaviors match closely. Low risk of tailing.",
+        "diag_warn": "**Caution**\n\nMinor rate differences. Adjust temperature profile.",
+        "diag_danger": "**Danger**\n\nHigh risk of tailing/face-back in bulk production.",
         "minute_unit": "min",
         "crit_light": "Light",
         "crit_p_light_acid": "Persp-Light(Acid)",
@@ -106,37 +139,38 @@ t = {
     },
     "KO": {
         "header": "Ohyoung Dye Finder",
-        "created_by": "Created by tskwon 🧑‍🔬",
-        "logout_btn": "🔓 로그아웃 (Logout)",
-        "menu_title": "📂 프로그램 선택",
-        "tab1": "1. 요구견뢰도 등급에 따른 염료선정",
-        "tab2": "2. 상용성 비교",
-        "tab3": "3. 요구견뢰도+상용성 통합",
+        "created_by": "Created by tskwon :material/science:",
+        "logout_btn": ":material/logout: 로그아웃 (Logout)",
+        "menu_title": "프로그램 선택",
+        # 메뉴 이름의 아이콘 제거
+        "tab1": "1. 요구견뢰도 매칭",
+        "tab2": "2. 상용성 비교 분석",
+        "tab3": "3. 통합 매칭 및 시뮬레이션",
         "instruction_text": "왼쪽 사이드바에서 원하는 염료군과 견뢰도 등급을 설정하세요.",
         "sb_group_title": "1. 염료 그룹 선택",
-        "select_all": "✅ 전체 선택 / 해제",
+        "select_all": "전체 선택 / 해제",
         "sb_spec_title": "2. 요구 스펙 설정 (이상)",
-        "sb_dye_select": "🎨 비교 염료 선택",
-        "spec_warn": "⚠️ 좌측 사이드바에서 염료 그룹을 최소 하나 이상 선택해 주세요.",
-        "search_res_hdr": "🔍 견뢰도 스펙 매칭 결과",
+        "sb_dye_select": "비교 염료 선택",
+        "spec_warn": "좌측 사이드바에서 염료 그룹을 최소 하나 이상 선택해 주세요.",
+        "search_res_hdr": ":material/manage_search: 견뢰도 스펙 매칭 결과",
         "search_res_sub": "검색 결과 (만족하는 염료: {count}개)",
         "search_res_desc": "**아래 표의 첫 번째 열(`선택`)을 클릭하여 비교할 염료를 선택하세요.** (최대 3개 권장)",
         "col_select": "선택",
         "col_group": "염료그룹",
         "col_name": "염료명",
-        "warn_limit": "⚠️ 안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.",
-        "sim_hdr": "📈 선택 염료 상용성 시뮬레이션",
-        "no_match": "💡 검색 조건에 맞는 염료가 없습니다.",
-        "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 선택됩니다.",
-        "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 선택됩니다.",
-        "err_time_data": "⚠️ 상용성 시간 데이터 열(0, 5, 20...)이 올바르지 않습니다.",
+        "warn_limit": "안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.",
+        "sim_hdr": ":material/monitoring: 선택 염료 상용성 시뮬레이션",
+        "no_match": "검색 조건에 맞는 염료가 없습니다.",
+        "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 적용됩니다.",
+        "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 적용됩니다.",
+        "err_time_data": "상용성 시간 데이터 열(0, 5, 20...)이 올바르지 않습니다.",
         "xaxis": "공정 시간 (분)",
         "yaxis": "염착률 / 고착률 (%)",
-        "summary_hdr": "📋 수치 요약",
-        "diag_hdr": "🔍 현장 진단",
-        "diag_excel": "✅ **우수**\n\n거동이 거의 일치합니다. (Tailing 확률 매우 낮음)",
-        "diag_warn": "⚠️ **주의**\n\n구간별 미세한 속도 차이가 있습니다. 승온 조건 조절 권장.",
-        "diag_danger": "🚨 **위험**\n\n대량 생산 시 불량(Tailing/Face-back) 발생 확률이 높습니다.",
+        "summary_hdr": ":material/dataset: 수치 요약",
+        "diag_hdr": ":material/troubleshoot: 현장 진단",
+        "diag_excel": "**우수**\n\n거동이 거의 일치합니다. (Tailing 확률 매우 낮음)",
+        "diag_warn": "**주의**\n\n구간별 미세한 속도 차이가 있습니다. 승온 조건 조절 권장.",
+        "diag_danger": "**위험**\n\n대량 생산 시 불량(Tailing/Face-back) 발생 확률이 높습니다.",
         "minute_unit": "분",
         "crit_light": "일광",
         "crit_p_light_acid": "땀일광(산성)",
@@ -156,7 +190,6 @@ lang = st.session_state.lang
 if "app_mode" not in st.session_state:
     st.session_state.app_mode = "tab3"
 
-# 전체 선택 토글 콜백 함수
 def toggle_all_groups(app_mode_str, all_groups_list):
     master_state = st.session_state[f"chk_all_{app_mode_str}"]
     for g in all_groups_list:
@@ -191,7 +224,16 @@ if os.path.exists("logo.png"):
         unsafe_allow_html=True
     )
 else:
-    st.title(f"🧪 {t[lang]['header']}")
+    # 로고가 없을 경우 Material Icon 적용
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+            <span class='material-symbols-outlined' style='font-size: 45px; margin-right: 15px; color:#1E3A8A;'>science</span>
+            <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 700;">{t[lang]["header"]}</h1>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
 # ==========================================
 # 5. 사이드바 - 프로그램 선택 메뉴 (버튼 형식)
@@ -210,7 +252,6 @@ if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" i
 
 st.sidebar.markdown("---")
 
-# 기준 항목 매핑 (공통)
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
@@ -228,18 +269,15 @@ if st.session_state.app_mode == "tab1":
     
     df1 = load_spec_data()
     if df1 is None:
-        st.error("⚠️ `integrated_dyes_data.xlsx` 파일이 없습니다.")
+        st.error("`integrated_dyes_data.xlsx` 파일이 없습니다.", icon=":material/error:")
     else:
-        # [사이드바 동적 렌더링 - 그룹 선택]
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups1 = list(df1['염료그룹'].dropna().unique()) if '염료그룹' in df1.columns else []
         
-        # 기본 체크값 설정 로직
         for g in all_groups1:
             if f"grp_{g}_tab1" not in st.session_state:
                 st.session_state[f"grp_{g}_tab1"] = True if g == "Sunfix SPD conc." else False
 
-        # 마스터 체크박스 (전체선택/해제)
         st.sidebar.checkbox(t[lang]["select_all"], value=False, key="chk_all_tab1", 
                             on_change=toggle_all_groups, args=("tab1", all_groups1))
         
@@ -252,7 +290,6 @@ if st.session_state.app_mode == "tab1":
         
         st.sidebar.markdown("---")
         
-        # [사이드바 동적 렌더링 - 스펙 슬라이더]
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req1 = {}
         for c in criteria_list:
@@ -261,11 +298,10 @@ if st.session_state.app_mode == "tab1":
                 max_val = 7.0 if c == '일광' else 5.0
                 req1[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab1")
                 
-        # [메인 화면 렌더링]
-        st.info(f"💡 **{t[lang]['instruction_text']}**")
+        st.info(f"**{t[lang]['instruction_text']}**", icon=":material/info:")
         
         if not selected_groups1:
-            st.warning(t[lang]["spec_warn"])
+            st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df1 = df1[df1['염료그룹'].isin(selected_groups1)].copy()
             for c, min_val in req1.items():
@@ -276,7 +312,6 @@ if st.session_state.app_mode == "tab1":
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df1))}*")
             
-            # '염료그룹'을 제외하고 '염료명'부터 표시
             disp_cols1 = ['염료명'] + [c for c in criteria_list if c in f_df1.columns]
             st.dataframe(f_df1[disp_cols1], hide_index=True, use_container_width=True)
 
@@ -322,37 +357,35 @@ elif st.session_state.app_mode == "tab2":
 
     file_to_read = "반응성 염료 상용성 실험.xlsx"
     if not os.path.exists(file_to_read):
-        st.error(f"❌ `{file_to_read}` 파일이 없습니다.")
+        st.error(f"`{file_to_read}` 파일이 없습니다.", icon=":material/error:")
         app2_data = None
     else:
         try:
             app2_data = parse_dye_data(file_to_read)
         except Exception as e:
-            st.error(f"데이터 파싱 오류: {e}")
+            st.error(f"데이터 파싱 오류: {e}", icon=":material/error:")
             app2_data = None
 
     if app2_data:
-        # [사이드바 동적 렌더링]
         st.sidebar.markdown(f"**{t[lang]['sb_dye_select']}**")
         selected_dyes2 = []
         for sheet_name, dyes in app2_data.items():
             dye_names = [d["name"] for d in dyes]
-            selections = st.sidebar.multiselect(f"📋 {sheet_name}", options=dye_names, key=f"tab2_ms_{sheet_name}")
+            selections = st.sidebar.multiselect(f":material/list: {sheet_name}", options=dye_names, key=f"tab2_ms_{sheet_name}")
             for sel in selections:
                 for d in dyes:
                     if d["name"] == sel: selected_dyes2.append((sheet_name, d))
                     
-        # [메인 화면 렌더링]
         st.subheader(t[lang]["sim_hdr"])
         if not selected_dyes2:
-            st.info(f"💡 {t[lang]['select_prompt_tab3']}")
+            st.info(f"{t[lang]['select_prompt_tab3']}", icon=":material/touch_app:")
         else:
             fig2 = go.Figure()
             custom_colors2 = ['#FFD700', '#FF4B4B', '#1F77B4', '#9467bd', '#2ca02c', '#ff7f0e', '#e377c2']
             
             for idx, (sheet_name, dye) in enumerate(selected_dyes2):
                 color = custom_colors2[idx % len(custom_colors2)]
-                label = f"{dye['name']}"  # 👈 [염료그룹] 부분을 삭제했습니다.
+                label = f"{dye['name']}"
                 x1 = [t_val for t_val in dye["times"] if t_val <= 20]
                 y1 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val <= 20]
                 x2 = [t_val for t_val in dye["times"] if t_val >= 25]
@@ -370,8 +403,8 @@ elif st.session_state.app_mode == "tab2":
                 margin=dict(l=40, r=40, t=20, b=40), 
                 legend=dict(
                     orientation="v",           
-                    yanchor="bottom",          # top에서 bottom으로 변경
-                    y=0.05,                    # 위치를 아래쪽으로 이동 (0.0이 맨 아래, 약간 여백을 위해 0.05)
+                    yanchor="bottom",
+                    y=0.05,
                     xanchor="right",           
                     x=0.99,                    
                     font=dict(size=16),        
@@ -395,14 +428,14 @@ elif st.session_state.app_mode == "tab2":
             
             if len(selected_dyes2) >= 2:
                 st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown(f"#### {t[lang]['diag_hdr']}")
+                st.subheader(t[lang]['diag_hdr'])
                 all_matrix = np.array([d["values"] for _, d in selected_dyes2])
                 std_per_time = np.std(all_matrix, axis=0)
                 max_dev = np.max(std_per_time)
                 
-                if max_dev < 5: st.success(t[lang]["diag_excel"])
-                elif max_dev < 12: st.warning(t[lang]["diag_warn"])
-                else: st.error(t[lang]["diag_danger"])
+                if max_dev < 5: st.success(t[lang]["diag_excel"], icon=":material/check_circle:")
+                elif max_dev < 12: st.warning(t[lang]["diag_warn"], icon=":material/warning:")
+                else: st.error(t[lang]["diag_danger"], icon=":material/dangerous:")
 
 # =====================================================================
 # [App 3] 통합 매칭 및 시뮬레이션
@@ -417,9 +450,8 @@ elif st.session_state.app_mode == "tab3":
     
     df3 = load_integrated_data()
     if df3 is None:
-        st.error("⚠️ `integrated_dyes_data.xlsx` 파일이 없습니다.")
+        st.error("`integrated_dyes_data.xlsx` 파일이 없습니다.", icon=":material/error:")
     else:
-        # [사이드바 동적 렌더링 - 그룹 선택]
         st.sidebar.markdown(f"**{t[lang]['sb_group_title']}**")
         all_groups3 = list(df3['염료그룹'].dropna().unique()) if '염료그룹' in df3.columns else []
         
@@ -439,7 +471,6 @@ elif st.session_state.app_mode == "tab3":
                 
         st.sidebar.markdown("---")
         
-        # [사이드바 동적 렌더링 - 스펙 슬라이더]
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req3 = {}
         for c in criteria_list:
@@ -448,10 +479,10 @@ elif st.session_state.app_mode == "tab3":
                 max_val = 7.0 if c == '일광' else 5.0
                 req3[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab3")
 
-        st.info(f"💡 **{t[lang]['instruction_text']}**")
+        st.info(f"**{t[lang]['instruction_text']}**", icon=":material/info:")
         
         if not selected_groups3:
-            st.warning(t[lang]["spec_warn"])
+            st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df3 = df3[df3['염료그룹'].isin(selected_groups3)].copy()
             for c, min_val in req3.items():
@@ -464,15 +495,16 @@ elif st.session_state.app_mode == "tab3":
             st.write(t[lang]["search_res_desc"])
             
             # ==========================================
-            # 🌟 [수정된 부분] 염료명 숨김 처리 & 클릭 시 색상이 변하는 커스텀 복사 버튼
+            # 커스텀 복사 버튼에 HTML 전용 Material Icon 적용
             # ==========================================
             all_filtered_dyes = f_df3['염료명'].tolist()
             dyes_to_copy_str = ",".join(all_filtered_dyes)
             
-            button_label = "📋 Copy All Dye Names" if lang == "EN" else "📋 검색된 전체 염료명 복사하기"
-            success_label = "✅ Copied!" if lang == "EN" else "✅ 복사 완료! (프로그램 2에 붙여넣으세요)"
+            btn_text = "Copy All Dye Names" if lang == "EN" else "검색된 전체 염료명 복사하기"
+            success_text = "Copied!" if lang == "EN" else "복사 완료! (프로그램 2에 붙여넣으세요)"
 
             button_html = f"""
+            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
             <button id="copy-btn" onclick="copyDyes()" style="
                 width: 100%;
                 background-color: #F0F2F6;
@@ -485,33 +517,41 @@ elif st.session_state.app_mode == "tab3":
                 border-radius: 8px;
                 cursor: pointer;
                 transition: 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
             ">
-                {button_label}
+                <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
+                <span id="btn-text">{btn_text}</span>
             </button>
             <script>
                 function copyDyes() {{
                     const textToCopy = "{dyes_to_copy_str}";
                     navigator.clipboard.writeText(textToCopy).then(() => {{
                         const btn = document.getElementById('copy-btn');
-                        btn.style.backgroundColor = '#4CAF50';  /* 성공 시 초록색으로 변경 */
+                        const btnText = document.getElementById('btn-text');
+                        const icon = btn.querySelector('.material-symbols-outlined');
+                        
+                        btn.style.backgroundColor = '#4CAF50';
                         btn.style.color = 'white';
                         btn.style.border = '1px solid #4CAF50';
-                        btn.innerText = "{success_label}";
+                        icon.innerText = "check_circle";
+                        btnText.innerText = "{success_text}";
                         
-                        // 2초 뒤에 원래 색상으로 복구
                         setTimeout(() => {{
                             btn.style.backgroundColor = '#F0F2F6';
                             btn.style.color = '#31333F';
                             btn.style.border = '1px solid #DCDCDC';
-                            btn.innerText = "{button_label}";
+                            icon.innerText = "content_copy";
+                            btnText.innerText = "{btn_text}";
                         }}, 2000);
                     }});
                 }}
             </script>
             """
             components.html(button_html, height=60)
-            # ==========================================
-
+            
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             
@@ -537,24 +577,24 @@ elif st.session_state.app_mode == "tab3":
                     st.session_state.tab3_selected_order.append(d)
             
             sel_dyes3 = st.session_state.tab3_selected_order[:3]
-            if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"])
+            if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
                                   
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
-                st.info(f"💡 {t[lang]['select_prompt']}")
+                st.info(f"{t[lang]['select_prompt']}", icon=":material/touch_app:")
             else:
                 time_pts3 = ['0', '5', '20', '25', '40', '80', '100']
                 val_cols3 = [tc for tc in time_pts3 if tc in df3.columns]
                 if len(val_cols3) < 2:
-                    st.warning(t[lang]["err_time_data"])
+                    st.warning(t[lang]["err_time_data"], icon=":material/warning:")
                 else:
                     fig3 = go.Figure()
                     colors = ['#FFD700', '#FF4B4B', '#1F77B4']
                     for idx, name in enumerate(sel_dyes3):
                         row = df3[df3['염료명'] == name].iloc[0]
                         color = colors[idx % len(colors)]
-                        label = f"{name}"  # 👈 [염료그룹] 부분을 삭제했습니다.
+                        label = f"{name}"
                         t_p1 = [tc for tc in val_cols3 if int(tc) <= 20]
                         v_p1 = [row[tc] for tc in t_p1]
                         t_p2 = [tc for tc in val_cols3 if int(tc) >= 25]
@@ -572,8 +612,8 @@ elif st.session_state.app_mode == "tab3":
                         margin=dict(l=40, r=40, t=20, b=40), 
                         legend=dict(
                             orientation="v",           
-                            yanchor="bottom",          # top에서 bottom으로 변경
-                            y=0.05,                    # 위치를 아래쪽으로 이동
+                            yanchor="bottom",
+                            y=0.05,
                             xanchor="right",           
                             x=0.99,                    
                             font=dict(size=16),        
@@ -597,14 +637,14 @@ elif st.session_state.app_mode == "tab3":
                     
                     if len(sel_dyes3) >= 2:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        st.markdown(f"#### {t[lang]['diag_hdr']}")
+                        st.subheader(t[lang]['diag_hdr'])
                         all_matrix = np.array([[df3[df3['염료명'] == name].iloc[0][tc] for tc in val_cols3] for name in sel_dyes3], dtype=float)
                         std_per_time = np.nanstd(all_matrix, axis=0)
                         max_dev = np.nanmax(std_per_time)
                         
-                        if max_dev < 5: st.success(t[lang]["diag_excel"])
-                        elif max_dev < 12: st.warning(t[lang]["diag_warn"])
-                        else: st.error(t[lang]["diag_danger"])
+                        if max_dev < 5: st.success(t[lang]["diag_excel"], icon=":material/check_circle:")
+                        elif max_dev < 12: st.warning(t[lang]["diag_warn"], icon=":material/warning:")
+                        else: st.error(t[lang]["diag_danger"], icon=":material/dangerous:")
 
 # ==========================================
 # 6. 최하단 공통 요소 (로그아웃 및 제작자 정보)
