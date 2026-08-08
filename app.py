@@ -4,55 +4,54 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 import base64
+import hashlib
 import streamlit.components.v1 as components
+from streamlit_gsheets import GSheetsConnection
 
 # ==========================================
 # 0. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
 # ==========================================
 st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout="wide")
 
-# 깔끔한 폰트 대비, 하단 구분선, 사이드바 좌측 포인트 선 및 Material Icons 폰트 로드
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <style>
-    /* 메인 화면 제목 및 부제목 스타일링 */
-    h2, h3 {
-        font-weight: 700 !important;
-        color: #111 !important;
-    }
-    h3 {
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-        margin-bottom: 24px;
-        margin-top: 10px;
-    }
-    /* 사이드바 텍스트(강조) 좌측 포인트 선 */
+    h2, h3 { font-weight: 700 !important; color: #111 !important; }
+    h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }
     [data-testid="stSidebar"] p strong {
-        display: block;
-        border-left: 4px solid #007bff;
-        padding-left: 10px;
-        margin-top: 20px;
-        margin-bottom: 8px;
-        font-size: 16px;
-        color: #333;
+        display: block; border-left: 4px solid #007bff; padding-left: 10px; 
+        margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
     }
-    /* 사이드바 구분선 여백 최적화 */
-    hr {
-        margin: 1.5em 0;
-    }
+    hr { margin: 1.5em 0; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 1. 공통 로그인 기능 구현
+# 1. 구글 시트 연동 및 보안 함수
 # ==========================================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def get_users_df():
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read(worksheet="Users", ttl=0) # ttl=0 : 항상 최신 데이터 로드
+    df = df.dropna(subset=['username']) # 빈 행 제거
+    return df
+
+def update_users_df(df):
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    conn.update(worksheet="Users", data=df)
+
+# ==========================================
+# 2. 로그인 및 회원가입 기능 (관리자 승인 시스템)
+# ==========================================
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "username" not in st.session_state: st.session_state.username = ""
+if "is_admin" not in st.session_state: st.session_state.is_admin = False
 
 if not st.session_state.logged_in:
     _, login_col, _ = st.columns([1, 2, 1])
     with login_col:
-        # 이모티콘 대신 Material Icon (science) 적용, 단 logo.png가 있으면 로고 우선
         login_logo_html = "<span class='material-symbols-outlined' style='font-size:40px; color:#1E3A8A; vertical-align:middle; margin-right:10px;'>science</span>"
         if os.path.exists("logo.png"):
             with open("logo.png", "rb") as f:
@@ -61,37 +60,85 @@ if not st.session_state.logged_in:
 
         st.markdown(
             f"""
-            <div style="background-color:#f9f9f9; padding: 2.5rem; border-radius: 12px; border: 1px solid #ddd; margin-top: 100px; box-shadow: 0px 4px 10px rgba(0,0,0,0.05);">
+            <div style="background-color:#f9f9f9; padding: 2.5rem; border-radius: 12px; border: 1px solid #ddd; margin-top: 50px; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
                 <h2 style="text-align: center; margin-top: 0; margin-bottom: 20px; font-weight: 700; color: #1E3A8A; border: none;">
-                    {login_logo_html}Ohyoung Dye Finder Login
+                    {login_logo_html}Ohyoung Dye Finder
                 </h2>
-                <p style="text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 30px;">
-                    Please log in to access the OHYOUNG Dye Matching System.<br>
-                    오영 염료 통합 시스템 접근을 위해 로그인해 주세요.
+                <p style="text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 0;">
+                    관리자의 승인이 필요한 시스템입니다.
                 </p>
             </div>
             """, 
             unsafe_allow_html=True
         )
+
+        tab1, tab2 = st.tabs(["🔑 로그인 (Login)", "📝 회원가입 (Sign Up)"])
         
-        with st.form("login_form"):
-            login_id = st.text_input("아이디 (Username / ID)", placeholder="Enter ID")
-            login_pw = st.text_input("비밀번호 (Password)", type="password", placeholder="Enter Password")
-            st.write("")
-            
-            submitted = st.form_submit_button("로그인 (Log In)", use_container_width=True, type="primary")
-            
-            if submitted:
-                if login_id == "ohyoung" and login_pw == "5050":
-                    st.session_state.logged_in = True
-                    st.rerun()
-                else:
-                    st.error("아이디 또는 비밀번호가 올바르지 않습니다. (Invalid ID or Password.)", icon=":material/error:")
+        # [로그인 탭]
+        with tab1:
+            with st.form("login_form"):
+                login_id = st.text_input("아이디 (ID)")
+                login_pw = st.text_input("비밀번호 (Password)", type="password")
+                submitted_login = st.form_submit_button("로그인", use_container_width=True, type="primary")
                 
+                if submitted_login:
+                    try:
+                        users_df = get_users_df()
+                        user_row = users_df[users_df['username'] == login_id]
+
+                        if not user_row.empty:
+                            stored_pw = str(user_row.iloc[0]['password_hash'])
+                            is_approved = int(user_row.iloc[0]['is_approved'])
+                            is_admin = int(user_row.iloc[0]['is_admin'])
+                            
+                            if stored_pw == hash_password(login_pw):
+                                if is_approved == 1:
+                                    st.session_state.logged_in = True
+                                    st.session_state.username = login_id
+                                    st.session_state.is_admin = bool(is_admin)
+                                    st.rerun()
+                                else:
+                                    st.warning("승인 대기 중인 계정입니다. 관리자에게 문의하세요.", icon=":material/hourglass_empty:")
+                            else:
+                                st.error("비밀번호가 올바르지 않습니다.", icon=":material/error:")
+                        else:
+                            st.error("존재하지 않는 아이디입니다.", icon=":material/error:")
+                    except Exception as e:
+                        st.error("데이터베이스 연결 오류가 발생했습니다. 구글 시트 설정을 확인하세요.", icon=":material/error:")
+                        st.write(e)
+                        
+        # [회원가입 탭]
+        with tab2:
+            with st.form("signup_form"):
+                new_id = st.text_input("생성할 아이디 (New ID)")
+                new_pw = st.text_input("비밀번호 (Password)", type="password")
+                new_pw_confirm = st.text_input("비밀번호 확인 (Confirm Password)", type="password")
+                submitted_signup = st.form_submit_button("가입 신청", use_container_width=True)
+                
+                if submitted_signup:
+                    if not new_id or not new_pw:
+                        st.warning("아이디와 비밀번호를 모두 입력해주세요.")
+                    elif new_pw != new_pw_confirm:
+                        st.error("비밀번호가 일치하지 않습니다.")
+                    else:
+                        users_df = get_users_df()
+                        if new_id in users_df['username'].values:
+                            st.error("이미 존재하는 아이디입니다.")
+                        else:
+                            new_user = pd.DataFrame([{
+                                'username': new_id,
+                                'password_hash': hash_password(new_pw),
+                                'is_approved': 0,
+                                'is_admin': 0
+                            }])
+                            updated_df = pd.concat([users_df, new_user], ignore_index=True)
+                            update_users_df(updated_df)
+                            st.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.")
+                        
     st.stop()
 
 # ==========================================
-# 2. 다국어 번역 데이터 사전 정의 (EN / KO)
+# 3. 다국어 번역 데이터 사전 정의 (EN / KO)
 # ==========================================
 t = {
     "EN": {
@@ -99,7 +146,6 @@ t = {
         "created_by": "Created by tskwon :material/science:",
         "logout_btn": ":material/logout: Log Out",
         "menu_title": "Select Program",
-        # 메뉴 이름의 아이콘 제거
         "tab1": "1. Fastness Matcher",
         "tab2": "2. Compatibility Analyzer",
         "tab3": "3. Fastness & Compatibility",
@@ -119,7 +165,7 @@ t = {
         "sim_hdr": ":material/monitoring: Compatibility Simulation",
         "no_match": "No dyes match the criteria.",
         "select_prompt": "Please check the **[Select]** checkbox above to compare dyes.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
-        "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
+        "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.",
         "err_time_data": "Time data columns are invalid.",
         "xaxis": "Process Time (min)",
         "yaxis": "Exhaustion / Fixation Rate (%)",
@@ -142,7 +188,6 @@ t = {
         "created_by": "Created by tskwon :material/science:",
         "logout_btn": ":material/logout: 로그아웃 (Logout)",
         "menu_title": "프로그램 선택",
-        # 메뉴 이름의 아이콘 제거
         "tab1": "1. 요구견뢰도 매칭",
         "tab2": "2. 상용성 비교 분석",
         "tab3": "3. 통합 매칭 및 시뮬레이션",
@@ -161,8 +206,8 @@ t = {
         "warn_limit": "안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.",
         "sim_hdr": ":material/monitoring: 선택 염료 상용성 시뮬레이션",
         "no_match": "검색 조건에 맞는 염료가 없습니다.",
-        "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 적용됩니다.",
-        "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.\n\n선택한 순서대로 Yellow, Red, Blue 로 그래프 색상이 적용됩니다.",
+        "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.",
+        "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.",
         "err_time_data": "상용성 시간 데이터 열(0, 5, 20...)이 올바르지 않습니다.",
         "xaxis": "공정 시간 (분)",
         "yaxis": "염착률 / 고착률 (%)",
@@ -182,13 +227,9 @@ t = {
     }
 }
 
-# 세션 상태 초기화
-if "lang" not in st.session_state:
-    st.session_state.lang = "EN"
+if "lang" not in st.session_state: st.session_state.lang = "EN"
 lang = st.session_state.lang
-
-if "app_mode" not in st.session_state:
-    st.session_state.app_mode = "tab3"
+if "app_mode" not in st.session_state: st.session_state.app_mode = "tab3"
 
 def toggle_all_groups(app_mode_str, all_groups_list):
     master_state = st.session_state[f"chk_all_{app_mode_str}"]
@@ -196,20 +237,37 @@ def toggle_all_groups(app_mode_str, all_groups_list):
         st.session_state[f"grp_{g}_{app_mode_str}"] = master_state
 
 # ==========================================
-# 3. 사이드바 최상단 (언어 전환 버튼)
+# 4. 사이드바 - 언어 및 메뉴 구성
 # ==========================================
 sb_col1, sb_col2 = st.sidebar.columns(2)
 if sb_col1.button("🇺🇸 ENGLISH", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
-    st.session_state.lang = "EN"
-    st.rerun()
+    st.session_state.lang = "EN"; st.rerun()
 if sb_col2.button("🇰🇷 KOREAN", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
-    st.session_state.lang = "KO"
-    st.rerun()
+    st.session_state.lang = "KO"; st.rerun()
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
+st.sidebar.write(f"👤 환영합니다, **{st.session_state.username}**님")
+
+if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
+    st.session_state.app_mode = "tab1"; st.rerun()
+if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab2" else "secondary"):
+    st.session_state.app_mode = "tab2"; st.rerun()
+if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab3" else "secondary"):
+    st.session_state.app_mode = "tab3"; st.rerun()
+
+# 관리자 계정일 경우에만 승인 메뉴 표시
+if st.session_state.is_admin:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**⚙️ 관리자 메뉴**")
+    if st.sidebar.button("사용자 승인 관리", use_container_width=True, type="primary" if st.session_state.app_mode == "admin" else "secondary"):
+        st.session_state.app_mode = "admin"; st.rerun()
 
 st.sidebar.markdown("---")
 
 # ==========================================
-# 4. 메인 화면 헤더 (로고 및 타이틀)
+# 5. 메인 화면 헤더 (로고 및 타이틀)
 # ==========================================
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
@@ -220,37 +278,17 @@ if os.path.exists("logo.png"):
             <img src="data:image/png;base64,{img_base64}" width="50" style="margin-right: 15px;">
             <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 700;">{t[lang]["header"]}</h1>
         </div>
-        """, 
-        unsafe_allow_html=True
+        """, unsafe_allow_html=True
     )
 else:
-    # 로고가 없을 경우 Material Icon 적용
     st.markdown(
         f"""
         <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
             <span class='material-symbols-outlined' style='font-size: 45px; margin-right: 15px; color:#1E3A8A;'>science</span>
             <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 700;">{t[lang]["header"]}</h1>
         </div>
-        """, 
-        unsafe_allow_html=True
+        """, unsafe_allow_html=True
     )
-
-# ==========================================
-# 5. 사이드바 - 프로그램 선택 메뉴 (버튼 형식)
-# ==========================================
-st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
-
-if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
-    st.session_state.app_mode = "tab1"
-    st.rerun()
-if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab2" else "secondary"):
-    st.session_state.app_mode = "tab2"
-    st.rerun()
-if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab3" else "secondary"):
-    st.session_state.app_mode = "tab3"
-    st.rerun()
-
-st.sidebar.markdown("---")
 
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
@@ -289,7 +327,6 @@ if st.session_state.app_mode == "tab1":
                 selected_groups1.append(group)
         
         st.sidebar.markdown("---")
-        
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req1 = {}
         for c in criteria_list:
@@ -395,23 +432,10 @@ elif st.session_state.app_mode == "tab2":
                 fig2.add_trace(go.Scatter(x=x2, y=y2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                 
             fig2.update_layout(
-                xaxis_title=t[lang]["xaxis"], 
-                yaxis_title=t[lang]["yaxis"], 
+                xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"], 
                 xaxis=dict(tickmode='array', tickvals=[0, 5, 20, 25, 40, 80, 100]), 
-                yaxis=dict(range=[0, 105]), 
-                hovermode="x unified", 
-                margin=dict(l=40, r=40, t=20, b=40), 
-                legend=dict(
-                    orientation="v",           
-                    yanchor="bottom",
-                    y=0.05,
-                    xanchor="right",           
-                    x=0.99,                    
-                    font=dict(size=16),        
-                    bgcolor="rgba(255, 255, 255, 0.8)",
-                    bordercolor="lightgray",
-                    borderwidth=1
-                )
+                yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40), 
+                legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=16), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="lightgray", borderwidth=1)
             )
             fig2.add_vline(x=20, line_dash="dash", line_color="gray")
             fig2.add_vline(x=25, line_dash="dash", line_color="gray")
@@ -470,7 +494,6 @@ elif st.session_state.app_mode == "tab3":
                 selected_groups3.append(group)
                 
         st.sidebar.markdown("---")
-        
         st.sidebar.markdown(f"**{t[lang]['sb_spec_title']}**")
         req3 = {}
         for c in criteria_list:
@@ -494,33 +517,18 @@ elif st.session_state.app_mode == "tab3":
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df3))}*")
             st.write(t[lang]["search_res_desc"])
             
-            # ==========================================
-            # 커스텀 복사 버튼에 HTML 전용 Material Icon 적용
-            # ==========================================
             all_filtered_dyes = f_df3['염료명'].tolist()
             dyes_to_copy_str = ",".join(all_filtered_dyes)
-            
             btn_text = "Copy All Dye Names" if lang == "EN" else "검색된 전체 염료명 복사하기"
             success_text = "Copied!" if lang == "EN" else "복사 완료! (프로그램 2에 붙여넣으세요)"
 
             button_html = f"""
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
             <button id="copy-btn" onclick="copyDyes()" style="
-                width: 100%;
-                background-color: #F0F2F6;
-                color: #31333F;
-                border: 1px solid #DCDCDC;
-                padding: 10px 20px;
-                text-align: center;
-                font-size: 16px;
-                font-weight: 600;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: 0.3s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
+                width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #DCDCDC;
+                padding: 10px 20px; text-align: center; font-size: 16px; font-weight: 600;
+                border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex;
+                align-items: center; justify-content: center; gap: 8px;
             ">
                 <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
                 <span id="btn-text">{btn_text}</span>
@@ -532,19 +540,11 @@ elif st.session_state.app_mode == "tab3":
                         const btn = document.getElementById('copy-btn');
                         const btnText = document.getElementById('btn-text');
                         const icon = btn.querySelector('.material-symbols-outlined');
-                        
-                        btn.style.backgroundColor = '#4CAF50';
-                        btn.style.color = 'white';
-                        btn.style.border = '1px solid #4CAF50';
-                        icon.innerText = "check_circle";
-                        btnText.innerText = "{success_text}";
-                        
+                        btn.style.backgroundColor = '#4CAF50'; btn.style.color = 'white'; btn.style.border = '1px solid #4CAF50';
+                        icon.innerText = "check_circle"; btnText.innerText = "{success_text}";
                         setTimeout(() => {{
-                            btn.style.backgroundColor = '#F0F2F6';
-                            btn.style.color = '#31333F';
-                            btn.style.border = '1px solid #DCDCDC';
-                            icon.innerText = "content_copy";
-                            btnText.innerText = "{btn_text}";
+                            btn.style.backgroundColor = '#F0F2F6'; btn.style.color = '#31333F'; btn.style.border = '1px solid #DCDCDC';
+                            icon.innerText = "content_copy"; btnText.innerText = "{btn_text}";
                         }}, 2000);
                     }});
                 }}
@@ -604,23 +604,10 @@ elif st.session_state.app_mode == "tab3":
                         fig3.add_trace(go.Scatter(x=t_p2, y=v_p2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
                         
                     fig3.update_layout(
-                        xaxis_title=t[lang]["xaxis"], 
-                        yaxis_title=t[lang]["yaxis"], 
+                        xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"], 
                         xaxis=dict(tickmode='array', tickvals=[int(tc) for tc in val_cols3]), 
-                        yaxis=dict(range=[0, 105]), 
-                        hovermode="x unified", 
-                        margin=dict(l=40, r=40, t=20, b=40), 
-                        legend=dict(
-                            orientation="v",           
-                            yanchor="bottom",
-                            y=0.05,
-                            xanchor="right",           
-                            x=0.99,                    
-                            font=dict(size=16),        
-                            bgcolor="rgba(255, 255, 255, 0.8)",
-                            bordercolor="lightgray",
-                            borderwidth=1
-                        )
+                        yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40), 
+                        legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=16), bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="lightgray", borderwidth=1)
                     )
                     fig3.add_vline(x=20, line_dash="dash", line_color="gray")
                     fig3.add_vline(x=25, line_dash="dash", line_color="gray")
@@ -646,6 +633,33 @@ elif st.session_state.app_mode == "tab3":
                         elif max_dev < 12: st.warning(t[lang]["diag_warn"], icon=":material/warning:")
                         else: st.error(t[lang]["diag_danger"], icon=":material/dangerous:")
 
+# =====================================================================
+# [Admin] 사용자 승인 관리 페이지
+# =====================================================================
+elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
+    st.subheader("⚙️ 사용자 승인 관리 (Admin Panel)")
+    st.write("회원가입을 신청한 사용자 목록입니다. 승인 버튼을 누르면 로그인이 가능해집니다.")
+    
+    users_df = get_users_df()
+    pending_users = users_df[users_df['is_approved'] == 0]
+    
+    if pending_users.empty:
+        st.info("승인 대기 중인 사용자가 없습니다.")
+    else:
+        for idx, row in pending_users.iterrows():
+            username = row['username']
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**아이디:** `{username}`")
+            with col2:
+                if st.button("승인하기", key=f"approve_{username}"):
+                    # 해당 유저의 승인 상태를 1로 변경하고 시트 업데이트
+                    users_df.loc[users_df['username'] == username, 'is_approved'] = 1
+                    update_users_df(users_df)
+                    st.success(f"'{username}' 계정이 승인되었습니다.")
+                    st.rerun()
+            st.markdown("---")
+
 # ==========================================
 # 6. 최하단 공통 요소 (로그아웃 및 제작자 정보)
 # ==========================================
@@ -655,4 +669,6 @@ st.sidebar.markdown(f"<p style='text-align: center; color: #888888; font-size: 1
 
 if st.sidebar.button(t[lang]["logout_btn"], use_container_width=True, type="secondary"):
     st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.session_state.is_admin = False
     st.rerun()
