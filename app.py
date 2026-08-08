@@ -72,7 +72,8 @@ def send_approval_email(recipient_email, recipient_name, user_id):
         server.quit()
         return True
     except Exception as e:
-        print(f"메일 발송 실패: {e}")
+        # 에러가 발생하면 화면에 빨간색으로 왜 안 되는지 정확히 띄워줍니다.
+        st.error(f"메일 발송 에러 발생: {e}")
         return False
 
 # ==========================================
