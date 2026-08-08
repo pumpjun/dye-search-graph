@@ -19,7 +19,7 @@ st.markdown("""
     h2, h3 { font-weight: 700 !important; color: #111 !important; }
     h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }
     [data-testid="stSidebar"] p strong {
-        display: block; border-left: 4px solid #007bff; padding-left: 10px; 
+        display: block; border-left: 4px solid #1b489d; padding-left: 10px; 
         margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
     }
     hr { margin: 1.5em 0; }
