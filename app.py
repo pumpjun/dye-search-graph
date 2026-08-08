@@ -5,6 +5,9 @@ import plotly.graph_objects as go
 import os
 import base64
 import hashlib
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
 
@@ -27,7 +30,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 1. 구글 시트 연동 및 보안 함수
+# 1. 구글 시트 연동, 메일 발송 및 보안 함수
 # ==========================================
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -41,6 +44,36 @@ def get_users_df():
 def update_users_df(df):
     conn = st.connection("gsheets", type=GSheetsConnection)
     conn.update(worksheet="Users", data=df)
+
+def send_approval_email(recipient_email, recipient_name, user_id):
+    try:
+        sender = st.secrets["email"]["sender"]
+        password = st.secrets["email"]["password"]
+        
+        msg = MIMEMultipart()
+        msg['From'] = sender
+        msg['To'] = recipient_email
+        msg['Subject'] = "[Ohyoung Dye Finder] 계정 승인이 완료되었습니다."
+        
+        body = f"""
+{recipient_name}님, 안녕하세요.
+
+요청하신 Ohyoung Dye Finder 시스템 계정({user_id})의 승인이 완료되었습니다.
+이제 시스템에 접속하여 로그인하실 수 있습니다.
+
+감사합니다.
+        """
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # 하이웍스 SMTP 서버 연결 (SSL 465 포트)
+        server = smtplib.SMTP_SSL('smtp.hiworks.com', 465)
+        server.login(sender, password)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"메일 발송 실패: {e}")
+        return False
 
 # ==========================================
 # 2. 로그인 및 회원가입 기능 (관리자 승인 시스템)
@@ -110,15 +143,16 @@ if not st.session_state.logged_in:
         # [회원가입 탭]
         with tab2:
             with st.form("signup_form"):
-                new_name = st.text_input("이름 (Name)") # 이름 입력란 추가
+                new_name = st.text_input("이름 (Name)")
+                new_email = st.text_input("이메일 (e-mail) - 승인 결과 수신용")
                 new_id = st.text_input("생성할 아이디 (New ID)")
                 new_pw = st.text_input("비밀번호 (Password)", type="password")
                 new_pw_confirm = st.text_input("비밀번호 확인 (Confirm Password)", type="password")
                 submitted_signup = st.form_submit_button("가입 신청", use_container_width=True)
                 
                 if submitted_signup:
-                    if not new_name or not new_id or not new_pw:
-                        st.warning("이름, 아이디, 비밀번호를 모두 입력해주세요.")
+                    if not new_name or not new_email or not new_id or not new_pw:
+                        st.warning("이름, 이메일, 아이디, 비밀번호를 모두 입력해주세요.")
                     elif new_pw != new_pw_confirm:
                         st.error("비밀번호가 일치하지 않습니다.")
                     else:
@@ -129,13 +163,14 @@ if not st.session_state.logged_in:
                             new_user = pd.DataFrame([{
                                 'username': new_id,
                                 'password_hash': hash_password(new_pw),
-                                'name': new_name,  # 시트에 이름 저장
+                                'name': new_name,
+                                'e-mail': new_email,  # 시트 열 이름 일치
                                 'is_approved': 0,
                                 'is_admin': 0
                             }])
                             updated_df = pd.concat([users_df, new_user], ignore_index=True)
                             update_users_df(updated_df)
-                            st.success("가입 신청이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.")
+                            st.success("가입 신청이 완료되었습니다. 관리자 승인 후 메일로 안내해 드립니다.")
                         
     st.stop()
 
@@ -630,7 +665,7 @@ elif st.session_state.app_mode == "tab3":
 # =====================================================================
 elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
     st.subheader("⚙️ 사용자 승인 관리 (Admin Panel)")
-    st.write("회원가입을 신청한 사용자 목록입니다. 승인 버튼을 누르면 로그인이 가능해집니다.")
+    st.write("회원가입을 신청한 사용자 목록입니다. 승인 버튼을 누르면 로그인이 가능해지며, 해당 사용자에게 안내 메일이 발송됩니다.")
     
     users_df = get_users_df()
     pending_users = users_df[users_df['is_approved'] == 0]
@@ -640,18 +675,28 @@ elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
     else:
         for idx, row in pending_users.iterrows():
             username = row['username']
-            # 기존 데이터에 이름이 없을 경우를 대비한 안전장치
             name = row['name'] if 'name' in row and pd.notna(row['name']) else "이름 없음"
+            email = row['e-mail'] if 'e-mail' in row and pd.notna(row['e-mail']) else ""
             
             col1, col2 = st.columns([3, 1])
             with col1:
-                st.markdown(f"**이름:** {name} &nbsp;&nbsp;|&nbsp;&nbsp; **아이디:** `{username}`")
+                st.markdown(f"**이름:** {name} &nbsp;&nbsp;|&nbsp;&nbsp; **아이디:** `{username}` &nbsp;&nbsp;|&nbsp;&nbsp; **이메일:** `{email}`")
             with col2:
                 if st.button("승인하기", key=f"approve_{username}"):
-                    # 해당 유저의 승인 상태를 1로 변경하고 시트 업데이트
+                    # 해당 유저 승인 상태 업데이트
                     users_df.loc[users_df['username'] == username, 'is_approved'] = 1
                     update_users_df(users_df)
-                    st.success(f"'{name}'({username}) 계정이 승인되었습니다.")
+                    
+                    # 자동 메일 발송 시도
+                    if email:
+                        mail_sent = send_approval_email(email, name, username)
+                        if mail_sent:
+                            st.success(f"'{name}' 님 승인 완료! (안내 메일 발송 성공)")
+                        else:
+                            st.warning(f"'{name}' 님 승인은 완료되었으나, 메일 발송에 실패했습니다.")
+                    else:
+                        st.success(f"'{name}' 님 승인 완료! (등록된 이메일이 없어 메일은 발송되지 않았습니다.)")
+                    
                     st.rerun()
             st.markdown("---")
 
