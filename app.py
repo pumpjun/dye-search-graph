@@ -143,7 +143,7 @@ if not st.session_state.logged_in:
 t = {
     "EN": {
         "header": "Ohyoung Dye Finder",
-        "created_by": "Created by tskwon :material/science:",
+        "created_by": "Created by tskwon <span class='material-symbols-outlined' style='font-size: 14px; vertical-align: middle;'>science</span>",
         "logout_btn": ":material/logout: Log Out",
         "menu_title": "Select Program",
         "tab1": "1. Fastness Matcher",
@@ -185,7 +185,7 @@ t = {
     },
     "KO": {
         "header": "Ohyoung Dye Finder",
-        "created_by": "Created by tskwon :material/science:",
+        "created_by": "Created by tskwon <span class='material-symbols-outlined' style='font-size: 14px; vertical-align: middle;'>science</span>",
         "logout_btn": ":material/logout: 로그아웃 (Logout)",
         "menu_title": "프로그램 선택",
         "tab1": "1. 요구견뢰도 매칭",
@@ -248,7 +248,6 @@ if sb_col2.button("🇰🇷 KOREAN", use_container_width=True, type="primary" if
 st.sidebar.markdown("---")
 
 st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
-st.sidebar.write(f"👤 환영합니다, **{st.session_state.username}**님")
 
 if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
     st.session_state.app_mode = "tab1"; st.rerun()
@@ -256,15 +255,6 @@ if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" i
     st.session_state.app_mode = "tab2"; st.rerun()
 if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab3" else "secondary"):
     st.session_state.app_mode = "tab3"; st.rerun()
-
-# 관리자 계정일 경우에만 승인 메뉴 표시
-if st.session_state.is_admin:
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**⚙️ 관리자 메뉴**")
-    if st.sidebar.button("사용자 승인 관리", use_container_width=True, type="primary" if st.session_state.app_mode == "admin" else "secondary"):
-        st.session_state.app_mode = "admin"; st.rerun()
-
-st.sidebar.markdown("---")
 
 # ==========================================
 # 5. 메인 화면 헤더 (로고 및 타이틀)
@@ -661,12 +651,22 @@ elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
             st.markdown("---")
 
 # ==========================================
-# 6. 최하단 공통 요소 (로그아웃 및 제작자 정보)
+# 6. 최하단 공통 요소 (관리자 메뉴, 제작자 정보, 로그아웃)
 # ==========================================
 st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
+
+# 관리자 계정일 경우에만 승인 메뉴를 하단에 표시
+if st.session_state.is_admin:
+    st.sidebar.markdown("**⚙️ 관리자 메뉴**")
+    if st.sidebar.button("사용자 승인 관리", use_container_width=True, type="primary" if st.session_state.app_mode == "admin" else "secondary"):
+        st.session_state.app_mode = "admin"; st.rerun()
+    st.sidebar.markdown("---")
+
+# 제작자 텍스트 표시 (구글 머티리얼 아이콘 적용)
 st.sidebar.markdown(f"<p style='text-align: center; color: #888888; font-size: 13px; margin-bottom: 10px;'>{t[lang]['created_by']}</p>", unsafe_allow_html=True)
 
+# 로그아웃 버튼
 if st.sidebar.button(t[lang]["logout_btn"], use_container_width=True, type="secondary"):
     st.session_state.logged_in = False
     st.session_state.username = ""
