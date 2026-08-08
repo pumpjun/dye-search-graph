@@ -110,14 +110,15 @@ if not st.session_state.logged_in:
         # [회원가입 탭]
         with tab2:
             with st.form("signup_form"):
+                new_name = st.text_input("이름 (Name)") # 이름 입력란 추가
                 new_id = st.text_input("생성할 아이디 (New ID)")
                 new_pw = st.text_input("비밀번호 (Password)", type="password")
                 new_pw_confirm = st.text_input("비밀번호 확인 (Confirm Password)", type="password")
                 submitted_signup = st.form_submit_button("가입 신청", use_container_width=True)
                 
                 if submitted_signup:
-                    if not new_id or not new_pw:
-                        st.warning("아이디와 비밀번호를 모두 입력해주세요.")
+                    if not new_name or not new_id or not new_pw:
+                        st.warning("이름, 아이디, 비밀번호를 모두 입력해주세요.")
                     elif new_pw != new_pw_confirm:
                         st.error("비밀번호가 일치하지 않습니다.")
                     else:
@@ -128,6 +129,7 @@ if not st.session_state.logged_in:
                             new_user = pd.DataFrame([{
                                 'username': new_id,
                                 'password_hash': hash_password(new_pw),
+                                'name': new_name,  # 시트에 이름 저장
                                 'is_approved': 0,
                                 'is_admin': 0
                             }])
