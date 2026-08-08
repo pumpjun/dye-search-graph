@@ -65,8 +65,8 @@ def send_approval_email(recipient_email, recipient_name, user_id):
         """
         msg.attach(MIMEText(body, 'plain'))
         
-        # 하이웍스 SMTP 서버 연결 (SSL 465 포트)
-        server = smtplib.SMTP_SSL('smtp.hiworks.com', 465)
+        # 하이웍스 SMTP 서버 연결 (알려주신 smtps.hiworks.com / SSL 465 포트 적용)
+        server = smtplib.SMTP_SSL('smtps.hiworks.com', 465)
         server.login(sender, password)
         server.send_message(msg)
         server.quit()
