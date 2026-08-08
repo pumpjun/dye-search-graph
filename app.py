@@ -640,15 +640,18 @@ elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
     else:
         for idx, row in pending_users.iterrows():
             username = row['username']
+            # 기존 데이터에 이름이 없을 경우를 대비한 안전장치
+            name = row['name'] if 'name' in row and pd.notna(row['name']) else "이름 없음"
+            
             col1, col2 = st.columns([3, 1])
             with col1:
-                st.markdown(f"**아이디:** `{username}`")
+                st.markdown(f"**이름:** {name} &nbsp;&nbsp;|&nbsp;&nbsp; **아이디:** `{username}`")
             with col2:
                 if st.button("승인하기", key=f"approve_{username}"):
                     # 해당 유저의 승인 상태를 1로 변경하고 시트 업데이트
                     users_df.loc[users_df['username'] == username, 'is_approved'] = 1
                     update_users_df(users_df)
-                    st.success(f"'{username}' 계정이 승인되었습니다.")
+                    st.success(f"'{name}'({username}) 계정이 승인되었습니다.")
                     st.rerun()
             st.markdown("---")
 
