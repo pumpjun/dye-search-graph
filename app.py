@@ -10,6 +10,18 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import streamlit.components.v1 as components
 from streamlit_gsheets import GSheetsConnection
+import streamlit as st
+
+# Streamlit 기본 상단 헤더, 메뉴, 푸터 숨기기
+hide_streamlit_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 # ==========================================
 # 0. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
@@ -297,18 +309,9 @@ def toggle_all_groups(app_mode_str, all_groups_list):
         st.session_state[f"grp_{g}_{app_mode_str}"] = master_state
 
 # ==========================================
-# 4. 사이드바 - 언어 및 메뉴 구성
+# 4. 사이드바 - 메뉴 구성 (언어 버튼은 상단 바 이동)
 # ==========================================
-sb_col1, sb_col2 = st.sidebar.columns(2)
-
-# 버튼 안의 🇺🇸, 🇰🇷 이모티콘을 지웠습니다! (CSS에서 이미지가 대신 들어갑니다)
-if sb_col1.button("ENGLISH", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
-    st.session_state.lang = "EN"; st.rerun()
-if sb_col2.button("KOREAN", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
-    st.session_state.lang = "KO"; st.rerun()
-
-st.sidebar.markdown("---")
-
+# 기존에 있던 st.sidebar.markdown("---") (구분선)을 지워서 여백을 없앱니다.
 st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
 
 if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
@@ -318,29 +321,92 @@ if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" i
 if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab3" else "secondary"):
     st.session_state.app_mode = "tab3"; st.rerun()
 
+
 # ==========================================
-# 5. 메인 화면 헤더 (로고 및 타이틀)
+# 5. 메인 화면 헤더 및 우측 상단 언어 전환 버튼
 # ==========================================
+# (1) 언어 전환 버튼 (마커 양쪽 균형)
+lang_cols = st.columns([1, 1])
+
+with lang_cols[0]:
+    st.markdown("<span id='lang-marker-1'></span>", unsafe_allow_html=True)
+    if st.button("EN", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
+        st.session_state.lang = "EN"; st.rerun()
+        
+with lang_cols[1]:
+    st.markdown("<span id='lang-marker-2'></span>", unsafe_allow_html=True)
+    if st.button("KO", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
+        st.session_state.lang = "KO"; st.rerun()
+
+# (2) 로고 및 타이틀 설정
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_base64 = base64.b64encode(f.read()).decode()
-    st.markdown(
-        f"""
-        <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
-            <img src="data:image/png;base64,{img_base64}" width="50" style="margin-right: 15px;">
-            <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 700;">{t[lang]["header"]}</h1>
-        </div>
-        """, unsafe_allow_html=True
-    )
+    header_html = f'<img src="data:image/png;base64,{img_base64}" class="fixed-logo"><h1 class="fixed-title">{t[lang]["header"]}</h1>'
 else:
-    st.markdown(
-        f"""
-        <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
-            <span class='material-symbols-outlined' style='font-size: 45px; margin-right: 15px; color:#1E3A8A;'>science</span>
-            <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 700;">{t[lang]["header"]}</h1>
-        </div>
-        """, unsafe_allow_html=True
-    )
+    header_html = f'<span class="material-symbols-outlined fixed-icon">science</span><h1 class="fixed-title">{t[lang]["header"]}</h1>'
+
+# (3) 고정 헤더 및 버튼 수평 정밀 맞춤 CSS
+fixed_header_style = f"""
+<style>
+/* --- 1. 상단 고정 하얀색 메뉴바 --- */
+.fixed-header-container {{
+    position: fixed; top: 0; left: 0; width: 100vw; height: 70px;
+    background-color: white; z-index: 9999998;
+    box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
+    display: flex; align-items: center; padding-left: 2rem;
+}}
+.fixed-logo {{ height: 40px; margin-right: 15px; }}
+.fixed-icon {{ font-size: 40px !important; margin-right: 15px; color: #1E3A8A; }}
+.fixed-title {{ margin: 0 !important; font-size: 1.8rem !important; font-weight: 700 !important; color: #111 !important; }}
+
+/* --- 2. 언어 버튼을 메뉴바 타이틀과 완벽한 수평선으로 맞춤 --- */
+div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) {{
+    position: fixed; 
+    top: 12px; /* 기존 15px에서 3px 올려서 로고/글자와 세로 센터를 맞춤 */
+    right: 30px;
+    width: 150px !important; 
+    z-index: 9999999; 
+    background: transparent;
+    display: flex;
+    align-items: center !important;
+}}
+
+/* 투명 마커 컨테이너는 화면에서 숨김 */
+div[data-testid="element-container"]:has(#lang-marker-1),
+div[data-testid="element-container"]:has(#lang-marker-2) {{
+    display: none !important;
+}}
+
+/* 버튼 높이와 여백 미세 조정 */
+div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) button {{
+    margin-bottom: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    min-height: 38px !important;
+}}
+
+/* 우측 상단 버튼 국기 아이콘 배치 */
+div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) > div:nth-child(1) button::before {{
+    content: ""; display: inline-block; width: 18px; height: 12px;
+    background: url("https://flagcdn.com/w40/us.png") no-repeat center; background-size: contain; margin-right: 6px;
+}}
+div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) > div:nth-child(2) button::before {{
+    content: ""; display: inline-block; width: 18px; height: 12px;
+    background: url("https://flagcdn.com/w40/kr.png") no-repeat center; background-size: contain; margin-right: 6px;
+}}
+
+/* --- 3. 사이드바 위에 빈 공간 완벽하게 없애기 --- */
+.block-container {{ padding-top: 90px !important; }} 
+[data-testid="stSidebar"] {{ padding-top: 0px !important; }}
+[data-testid="stSidebarHeader"] {{ display: none !important; }} 
+[data-testid="stSidebarContent"] {{ padding-top: 70px !important; }} 
+[data-testid="stSidebarUserContent"] {{ padding-top: 10px !important; }} 
+</style>
+
+<div class="fixed-header-container">{header_html}</div>
+"""
+st.markdown(fixed_header_style, unsafe_allow_html=True)
 
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
