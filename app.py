@@ -323,20 +323,32 @@ if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" i
 
 
 # ==========================================
-# 5. 메인 화면 헤더 및 우측 상단 언어 전환 버튼
+# 5. 메인 화면 헤더 및 우측 상단 언어 전환 드롭다운
 # ==========================================
-# (1) 언어 전환 버튼 (마커 양쪽 균형)
-lang_cols = st.columns([1, 1])
+# (1) 언어 전환 드롭다운 (Selectbox 활용)
+lang_col, _ = st.columns([1, 0.01]) 
 
-with lang_cols[0]:
-    st.markdown("<span id='lang-marker-1'></span>", unsafe_allow_html=True)
-    if st.button("EN", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
-        st.session_state.lang = "EN"; st.rerun()
-        
-with lang_cols[1]:
-    st.markdown("<span id='lang-marker-2'></span>", unsafe_allow_html=True)
-    if st.button("KO", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
-        st.session_state.lang = "KO"; st.rerun()
+with lang_col:
+    st.markdown("<div id='lang-dropdown-marker'></div>", unsafe_allow_html=True)
+    
+    # 드롭다운 옵션 및 현재 인덱스 설정
+    lang_options = ["English (EN)", "한국어 (KO)"]
+    current_idx = 0 if st.session_state.lang == "EN" else 1
+    
+    # 스트림릿 기본 selectbox 생성
+    selected_lang = st.selectbox(
+        "Language", 
+        options=lang_options, 
+        index=current_idx, 
+        label_visibility="collapsed"
+    )
+    
+    if selected_lang == "English (EN)" and st.session_state.lang != "EN":
+        st.session_state.lang = "EN"
+        st.rerun()
+    elif selected_lang == "한국어 (KO)" and st.session_state.lang != "KO":
+        st.session_state.lang = "KO"
+        st.rerun()
 
 # (2) 로고 및 타이틀 설정
 if os.path.exists("logo.png"):
@@ -346,13 +358,17 @@ if os.path.exists("logo.png"):
 else:
     header_html = f'<span class="material-symbols-outlined fixed-icon">science</span><h1 class="fixed-title">{t[lang]["header"]}</h1>'
 
-# (3) 고정 헤더 및 버튼 수평 정밀 맞춤 CSS
+# (3) 고정 헤더 및 드롭다운 커스텀 CSS
 fixed_header_style = f"""
 <style>
+/* --- 부모(메인 화면)의 계층을 끌어올려 사이드바 덮기 --- */
+section.main {{ z-index: 99999 !important; }}
+section[data-testid="stSidebar"] {{ z-index: 10 !important; }}
+
 /* --- 1. 상단 고정 하얀색 메뉴바 --- */
 .fixed-header-container {{
     position: fixed; top: 0; left: 0; width: 100vw; height: 70px;
-    background-color: white; z-index: 9999998;
+    background-color: white; z-index: 99999999 !important;
     box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
     display: flex; align-items: center; padding-left: 2rem;
 }}
@@ -360,43 +376,43 @@ fixed_header_style = f"""
 .fixed-icon {{ font-size: 40px !important; margin-right: 15px; color: #1E3A8A; }}
 .fixed-title {{ margin: 0 !important; font-size: 1.8rem !important; font-weight: 700 !important; color: #111 !important; }}
 
-/* --- 2. 언어 버튼을 메뉴바 타이틀과 완벽한 수평선으로 맞춤 --- */
-div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) {{
-    position: fixed; 
-    top: 12px; /* 기존 15px에서 3px 올려서 로고/글자와 세로 센터를 맞춤 */
-    right: 30px;
-    width: 150px !important; 
-    z-index: 9999999; 
-    background: transparent;
-    display: flex;
-    align-items: center !important;
+/* --- 2. 언어 드롭다운을 메뉴바 우측 상단 중앙에 고정 --- */
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) {{
+    position: fixed !important; 
+    top: 35px !important; 
+    transform: translateY(-50%) !important; 
+    right: 30px !important;
+    width: 180px !important; /* <--- 여기서 넓이를 140px에서 180px로 늘렸습니다! */
+    z-index: 100000000 !important; 
+    background: transparent !important;
 }}
 
-/* 투명 마커 컨테이너는 화면에서 숨김 */
-div[data-testid="element-container"]:has(#lang-marker-1),
-div[data-testid="element-container"]:has(#lang-marker-2) {{
+/* --- 3. 투명하고 깔끔한 드롭다운 디자인 --- */
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-testid="element-container"]:has(#lang-dropdown-marker) {{
     display: none !important;
 }}
 
-/* 버튼 높이와 여백 미세 조정 */
-div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) button {{
-    margin-bottom: 0 !important;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
-    min-height: 38px !important;
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] > div {{
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
 }}
 
-/* 우측 상단 버튼 국기 아이콘 배치 */
-div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) > div:nth-child(1) button::before {{
-    content: ""; display: inline-block; width: 18px; height: 12px;
-    background: url("https://flagcdn.com/w40/us.png") no-repeat center; background-size: contain; margin-right: 6px;
-}}
-div[data-testid="stHorizontalBlock"]:has(#lang-marker-1) > div:nth-child(2) button::before {{
-    content: ""; display: inline-block; width: 18px; height: 12px;
-    background: url("https://flagcdn.com/w40/kr.png") no-repeat center; background-size: contain; margin-right: 6px;
+/* 글자 크기 강제 적용 */
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] span,
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] p,
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] div {{
+    color: #1b489d !important; 
+    font-weight: 600 !important;
+    font-size: 17px !important; 
 }}
 
-/* --- 3. 사이드바 위에 빈 공간 완벽하게 없애기 --- */
+div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] > div:hover {{
+    background-color: transparent !important;
+}}
+
+/* --- 4. 사이드바 빈 공간 없애기 --- */
 .block-container {{ padding-top: 90px !important; }} 
 [data-testid="stSidebar"] {{ padding-top: 0px !important; }}
 [data-testid="stSidebarHeader"] {{ display: none !important; }} 
