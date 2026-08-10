@@ -26,6 +26,12 @@ st.markdown("""
         margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
     }
     hr { margin: 1.5em 0; }
+    
+    /* 🇺🇸 US, 🇰🇷 KR 언어 선택 버튼에만 국기 이모티콘 폰트 강제 적용 */
+    /* (사이드바의 첫 번째 컬럼(가로 블록) 내부에 있는 버튼만 타겟팅) */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:first-of-type button {
+        font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -606,7 +612,7 @@ elif st.session_state.app_mode == "tab3":
             
             sel_dyes3 = st.session_state.tab3_selected_order[:3]
             if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
-                                  
+                                      
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
