@@ -306,9 +306,11 @@ def toggle_all_groups(app_mode_str, all_groups_list):
 # 4. 사이드바 - 언어 및 메뉴 구성
 # ==========================================
 sb_col1, sb_col2 = st.sidebar.columns(2)
-if sb_col1.button("🇺🇸 ENGLISH", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
+
+# 버튼 안의 🇺🇸, 🇰🇷 이모티콘을 지웠습니다! (CSS에서 이미지가 대신 들어갑니다)
+if sb_col1.button("ENGLISH", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
     st.session_state.lang = "EN"; st.rerun()
-if sb_col2.button("🇰🇷 KOREAN", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
+if sb_col2.button("KOREAN", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
     st.session_state.lang = "KO"; st.rerun()
 
 st.sidebar.markdown("---")
