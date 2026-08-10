@@ -19,9 +19,6 @@ st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <style>
-    /* 1. 구글 폰트에서 국기를 지원하는 이모티콘 폰트 불러오기 */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-
     h2, h3 { font-weight: 700 !important; color: #111 !important; }
     h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }
     [data-testid="stSidebar"] p strong {
@@ -30,9 +27,32 @@ st.markdown("""
     }
     hr { margin: 1.5em 0; }
     
-    /* 2. 사이드바 상단 언어 선택 버튼(Columns)에 구글 이모티콘 폰트 강제 적용 */
-    [data-testid="stSidebar"] [data-testid="column"] button {
-        font-family: 'Noto Color Emoji', sans-serif !important;
+    /* 🇺🇸 첫 번째 버튼(ENGLISH) 앞에 미국 국기 이미지 삽입 */
+    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(1) button p::before {
+        content: "";
+        display: inline-block;
+        width: 20px;
+        height: 14px;
+        background-image: url("https://flagcdn.com/w20/us.png");
+        background-size: cover;
+        background-position: center;
+        margin-right: 8px;
+        vertical-align: middle;
+        border-radius: 2px;
+    }
+
+    /* 🇰🇷 두 번째 버튼(KOREAN) 앞에 한국 국기 이미지 삽입 */
+    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(2) button p::before {
+        content: "";
+        display: inline-block;
+        width: 20px;
+        height: 14px;
+        background-image: url("https://flagcdn.com/w20/kr.png");
+        background-size: cover;
+        background-position: center;
+        margin-right: 8px;
+        vertical-align: middle;
+        border-radius: 2px;
     }
 </style>
 """, unsafe_allow_html=True)
