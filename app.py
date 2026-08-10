@@ -19,6 +19,9 @@ st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <style>
+    /* 1. 구글 폰트에서 국기를 지원하는 이모티콘 폰트 불러오기 */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
     h2, h3 { font-weight: 700 !important; color: #111 !important; }
     h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }
     [data-testid="stSidebar"] p strong {
@@ -27,10 +30,9 @@ st.markdown("""
     }
     hr { margin: 1.5em 0; }
     
-    /* 🇺🇸 US, 🇰🇷 KR 언어 선택 버튼에만 국기 이모티콘 폰트 강제 적용 */
-    /* (사이드바의 첫 번째 컬럼(가로 블록) 내부에 있는 버튼만 타겟팅) */
-    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"]:first-of-type button {
-        font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
+    /* 2. 사이드바 상단 언어 선택 버튼(Columns)에 구글 이모티콘 폰트 강제 적용 */
+    [data-testid="stSidebar"] [data-testid="column"] button {
+        font-family: 'Noto Color Emoji', sans-serif !important;
     }
 </style>
 """, unsafe_allow_html=True)
