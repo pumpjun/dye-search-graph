@@ -27,32 +27,26 @@ st.markdown("""
     }
     hr { margin: 1.5em 0; }
     
-    /* 🇺🇸 첫 번째 버튼(ENGLISH) 앞에 미국 국기 이미지 삽입 */
-    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(1) button p::before {
+    /* 🇺🇸 첫 번째 칸(ENGLISH) 버튼 자체에 미국 국기 꽂아넣기 */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > div:nth-child(1) button::before {
         content: "";
         display: inline-block;
-        width: 20px;
-        height: 14px;
-        background-image: url("https://flagcdn.com/w20/us.png");
-        background-size: cover;
-        background-position: center;
+        width: 24px;
+        height: 16px;
+        background: url("https://flagcdn.com/w40/us.png") no-repeat center;
+        background-size: contain;
         margin-right: 8px;
-        vertical-align: middle;
-        border-radius: 2px;
     }
 
-    /* 🇰🇷 두 번째 버튼(KOREAN) 앞에 한국 국기 이미지 삽입 */
-    [data-testid="stSidebar"] [data-testid="column"]:nth-of-type(2) button p::before {
+    /* 🇰🇷 두 번째 칸(KOREAN) 버튼 자체에 한국 국기 꽂아넣기 */
+    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > div:nth-child(2) button::before {
         content: "";
         display: inline-block;
-        width: 20px;
-        height: 14px;
-        background-image: url("https://flagcdn.com/w20/kr.png");
-        background-size: cover;
-        background-position: center;
+        width: 24px;
+        height: 16px;
+        background: url("https://flagcdn.com/w40/kr.png") no-repeat center;
+        background-size: contain;
         margin-right: 8px;
-        vertical-align: middle;
-        border-radius: 2px;
     }
 </style>
 """, unsafe_allow_html=True)
