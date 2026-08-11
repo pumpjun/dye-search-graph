@@ -3,3 +3,5 @@ pandas
 numpy
 plotly
 st-gsheets-connection
+openpyxl
+streamlit-gsheets
