@@ -1,5 +1,7 @@
 streamlit==1.58.0
 pandas
 numpy
-plotly
-st-gsheets-connection
+colour-science
+scipy
+openpyxl
+pywin32
