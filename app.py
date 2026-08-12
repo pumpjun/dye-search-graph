@@ -4,13 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 import base64
-import hashlib
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import streamlit.components.v1 as components
-from streamlit_gsheets import GSheetsConnection
-import streamlit as st
 
 # Streamlit 기본 상단 헤더, 메뉴, 푸터 숨기기
 hide_streamlit_style = """
@@ -24,7 +18,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 # ==========================================
-# 0. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
+# 1. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
 # ==========================================
 st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout="wide")
 
@@ -63,160 +57,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 1. 구글 시트 연동, 메일 발송 및 보안 함수
-# ==========================================
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def get_users_df():
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    df = conn.read(worksheet="Users", ttl=0) # ttl=0 : 항상 최신 데이터 로드
-    df = df.dropna(subset=['username']) # 빈 행 제거
-    return df
-
-def update_users_df(df):
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    conn.update(worksheet="Users", data=df)
-
-def send_approval_email(recipient_email, recipient_name, user_id):
-    try:
-        sender = st.secrets["email"]["sender"]
-        password = st.secrets["email"]["password"]
-        
-        msg = MIMEMultipart()
-        msg['From'] = sender
-        msg['To'] = recipient_email
-        msg['Subject'] = "[Ohyoung Dye Finder] 계정 승인이 완료되었습니다."
-        
-        body = f"""
-{recipient_name}님, 안녕하세요.
-
-요청하신 Ohyoung Dye Finder 시스템 계정({user_id})의 승인이 완료되었습니다.
-이제 시스템에 접속하여 로그인하실 수 있습니다.
-
-감사합니다.
-        """
-        msg.attach(MIMEText(body, 'plain'))
-        
-        # 하이웍스 SMTP 서버 연결 (알려주신 smtps.hiworks.com / SSL 465 포트 적용)
-        server = smtplib.SMTP_SSL('smtps.hiworks.com', 465)
-        server.login(sender, password)
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception as e:
-        # 에러가 발생하면 화면에 빨간색으로 왜 안 되는지 정확히 띄워줍니다.
-        st.error(f"메일 발송 에러 발생: {e}")
-        return False
 
 # ==========================================
-# 2. 로그인 및 회원가입 기능 (관리자 승인 시스템)
-# ==========================================
-if "logged_in" not in st.session_state: st.session_state.logged_in = False
-if "username" not in st.session_state: st.session_state.username = ""
-if "is_admin" not in st.session_state: st.session_state.is_admin = False
-
-if not st.session_state.logged_in:
-    _, login_col, _ = st.columns([1, 2, 1])
-    with login_col:
-        login_logo_html = "<span class='material-symbols-outlined' style='font-size:40px; color:#1E3A8A; vertical-align:middle; margin-right:10px;'>science</span>"
-        if os.path.exists("logo.png"):
-            with open("logo.png", "rb") as f:
-                login_img_base64 = base64.b64encode(f.read()).decode()
-            login_logo_html = f'<img src="data:image/png;base64,{login_img_base64}" width="45" style="vertical-align: middle; margin-right: 10px; margin-bottom: 5px;">'
-
-        st.markdown(
-            f"""
-            <div style="background-color:#f9f9f9; padding: 2.5rem; border-radius: 12px; border: 1px solid #ddd; margin-top: 50px; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                <h2 style="text-align: center; margin-top: 0; margin-bottom: 20px; font-weight: 700; color: #1E3A8A; border: none;">
-                    {login_logo_html}Ohyoung Dye Finder
-                </h2>
-                <p style="text-align: center; color: #666; font-size: 0.95rem; margin-bottom: 0;">
-                    관리자의 승인이 필요한 시스템입니다.
-                </p>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
-
-        tab1, tab2 = st.tabs(["🔑 로그인 (Login)", "📝 회원가입 (Sign Up)"])
-        
-        # [로그인 탭]
-        with tab1:
-            with st.form("login_form"):
-                login_id = st.text_input("아이디 (ID)")
-                login_pw = st.text_input("비밀번호 (Password)", type="password")
-                submitted_login = st.form_submit_button("로그인", use_container_width=True, type="primary")
-                
-                if submitted_login:
-                    try:
-                        users_df = get_users_df()
-                        user_row = users_df[users_df['username'] == login_id]
-
-                        if not user_row.empty:
-                            stored_pw = str(user_row.iloc[0]['password_hash'])
-                            is_approved = int(user_row.iloc[0]['is_approved'])
-                            is_admin = int(user_row.iloc[0]['is_admin'])
-                            
-                            if stored_pw == hash_password(login_pw):
-                                if is_approved == 1:
-                                    st.session_state.logged_in = True
-                                    st.session_state.username = login_id
-                                    st.session_state.is_admin = bool(is_admin)
-                                    st.rerun()
-                                else:
-                                    st.warning("승인 대기 중인 계정입니다. 관리자에게 문의하세요.", icon=":material/hourglass_empty:")
-                            else:
-                                st.error("비밀번호가 올바르지 않습니다.", icon=":material/error:")
-                        else:
-                            st.error("존재하지 않는 아이디입니다.", icon=":material/error:")
-                    except Exception as e:
-                        st.error("데이터베이스 연결 오류가 발생했습니다. 구글 시트 설정을 확인하세요.", icon=":material/error:")
-                        st.write(e)
-                        
-        # [회원가입 탭]
-        with tab2:
-            with st.form("signup_form"):
-                new_name = st.text_input("이름 (Name)")
-                new_email = st.text_input("이메일 (e-mail) - 승인 결과 수신용")
-                new_id = st.text_input("생성할 아이디 (New ID)")
-                new_pw = st.text_input("비밀번호 (Password)", type="password")
-                new_pw_confirm = st.text_input("비밀번호 확인 (Confirm Password)", type="password")
-                submitted_signup = st.form_submit_button("가입 신청", use_container_width=True)
-                
-                if submitted_signup:
-                    if not new_name or not new_email or not new_id or not new_pw:
-                        st.warning("이름, 이메일, 아이디, 비밀번호를 모두 입력해주세요.")
-                    elif new_pw != new_pw_confirm:
-                        st.error("비밀번호가 일치하지 않습니다.")
-                    else:
-                        users_df = get_users_df()
-                        if new_id in users_df['username'].values:
-                            st.error("이미 존재하는 아이디입니다.")
-                        else:
-                            new_user = pd.DataFrame([{
-                                'username': new_id,
-                                'password_hash': hash_password(new_pw),
-                                'name': new_name,
-                                'e-mail': new_email,  # 시트 열 이름 일치
-                                'is_approved': 0,
-                                'is_admin': 0
-                            }])
-                            updated_df = pd.concat([users_df, new_user], ignore_index=True)
-                            update_users_df(updated_df)
-                            st.success("가입 신청이 완료되었습니다. 관리자 승인 후 메일로 안내해 드립니다.")
-                        
-    st.stop()
-
-# ==========================================
-# 3. 다국어 번역 데이터 사전 정의 (EN / KO)
+# 2. 다국어 번역 데이터 사전 정의 (EN / KO)
 # ==========================================
 t = {
     "EN": {
         "header": "Ohyoung Dye Finder",
         "created_by": "Created by tskwon <span class='material-symbols-outlined' style='font-size: 14px; vertical-align: middle;'>science</span>",
-        "logout_btn": ":material/logout: Log Out",
         "menu_title": "Select Program",
         "tab1": "1. Fastness Matcher",
         "tab2": "2. Compatibility Analyzer",
@@ -258,7 +106,6 @@ t = {
     "KO": {
         "header": "Ohyoung Dye Finder",
         "created_by": "Created by tskwon <span class='material-symbols-outlined' style='font-size: 14px; vertical-align: middle;'>science</span>",
-        "logout_btn": ":material/logout: 로그아웃 (Logout)",
         "menu_title": "프로그램 선택",
         "tab1": "1. 요구견뢰도 매칭",
         "tab2": "2. 상용성 비교 분석",
@@ -309,9 +156,8 @@ def toggle_all_groups(app_mode_str, all_groups_list):
         st.session_state[f"grp_{g}_{app_mode_str}"] = master_state
 
 # ==========================================
-# 4. 사이드바 - 메뉴 구성 (언어 버튼은 상단 바 이동)
+# 3. 사이드바 - 메뉴 구성
 # ==========================================
-# 기존에 있던 st.sidebar.markdown("---") (구분선)을 지워서 여백을 없앱니다.
 st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
 
 if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
@@ -323,19 +169,16 @@ if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" i
 
 
 # ==========================================
-# 5. 메인 화면 헤더 및 우측 상단 언어 전환 드롭다운
+# 4. 메인 화면 헤더 및 우측 상단 언어 전환 드롭다운
 # ==========================================
-# (1) 언어 전환 드롭다운 (Selectbox 활용)
 lang_col, _ = st.columns([1, 0.01]) 
 
 with lang_col:
     st.markdown("<div id='lang-dropdown-marker'></div>", unsafe_allow_html=True)
     
-    # 드롭다운 옵션 및 현재 인덱스 설정
     lang_options = ["English (EN)", "한국어 (KO)"]
     current_idx = 0 if st.session_state.lang == "EN" else 1
     
-    # 스트림릿 기본 selectbox 생성
     selected_lang = st.selectbox(
         "Language", 
         options=lang_options, 
@@ -350,7 +193,6 @@ with lang_col:
         st.session_state.lang = "KO"
         st.rerun()
 
-# (2) 로고 및 타이틀 설정
 if os.path.exists("logo.png"):
     with open("logo.png", "rb") as f:
         img_base64 = base64.b64encode(f.read()).decode()
@@ -358,7 +200,6 @@ if os.path.exists("logo.png"):
 else:
     header_html = f'<span class="material-symbols-outlined fixed-icon">science</span><h1 class="fixed-title">{t[lang]["header"]}</h1>'
 
-# (3) 고정 헤더 및 드롭다운 커스텀 CSS
 fixed_header_style = f"""
 <style>
 /* --- 부모(메인 화면)의 계층을 끌어올려 사이드바 덮기 --- */
@@ -382,7 +223,7 @@ div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) {{
     top: 35px !important; 
     transform: translateY(-50%) !important; 
     right: 30px !important;
-    width: 180px !important; /* <--- 여기서 넓이를 140px에서 180px로 늘렸습니다! */
+    width: 180px !important;
     z-index: 100000000 !important; 
     background: transparent !important;
 }}
@@ -399,7 +240,6 @@ div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb
     cursor: pointer !important;
 }}
 
-/* 글자 크기 강제 적용 */
 div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] span,
 div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] p,
 div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] div {{
@@ -767,65 +607,9 @@ elif st.session_state.app_mode == "tab3":
                         elif max_dev < 12: st.warning(t[lang]["diag_warn"], icon=":material/warning:")
                         else: st.error(t[lang]["diag_danger"], icon=":material/dangerous:")
 
-# =====================================================================
-# [Admin] 사용자 승인 관리 페이지
-# =====================================================================
-elif st.session_state.app_mode == "admin" and st.session_state.is_admin:
-    st.subheader("⚙️ 사용자 승인 관리 (Admin Panel)")
-    st.write("회원가입을 신청한 사용자 목록입니다. 승인 버튼을 누르면 로그인이 가능해지며, 해당 사용자에게 안내 메일이 발송됩니다.")
-    
-    users_df = get_users_df()
-    pending_users = users_df[users_df['is_approved'] == 0]
-    
-    if pending_users.empty:
-        st.info("승인 대기 중인 사용자가 없습니다.")
-    else:
-        for idx, row in pending_users.iterrows():
-            username = row['username']
-            name = row['name'] if 'name' in row and pd.notna(row['name']) else "이름 없음"
-            email = row['e-mail'] if 'e-mail' in row and pd.notna(row['e-mail']) else ""
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"**이름:** {name} &nbsp;&nbsp;|&nbsp;&nbsp; **아이디:** `{username}` &nbsp;&nbsp;|&nbsp;&nbsp; **이메일:** `{email}`")
-            with col2:
-                if st.button("승인하기", key=f"approve_{username}"):
-                    # 해당 유저 승인 상태 업데이트
-                    users_df.loc[users_df['username'] == username, 'is_approved'] = 1
-                    update_users_df(users_df)
-                    
-                    # 자동 메일 발송 시도
-                    if email:
-                        mail_sent = send_approval_email(email, name, username)
-                        if mail_sent:
-                            st.success(f"'{name}' 님 승인 완료! (안내 메일 발송 성공)")
-                        else:
-                            st.warning(f"'{name}' 님 승인은 완료되었으나, 메일 발송에 실패했습니다.")
-                    else:
-                        st.success(f"'{name}' 님 승인 완료! (등록된 이메일이 없어 메일은 발송되지 않았습니다.)")
-                    
-                    st.rerun()
-            st.markdown("---")
-
 # ==========================================
-# 6. 최하단 공통 요소 (관리자 메뉴, 제작자 정보, 로그아웃)
+# 5. 최하단 공통 요소 (제작자 정보)
 # ==========================================
 st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
-
-# 관리자 계정일 경우에만 승인 메뉴를 하단에 표시
-if st.session_state.is_admin:
-    st.sidebar.markdown("**⚙️ 관리자 메뉴**")
-    if st.sidebar.button("사용자 승인 관리", use_container_width=True, type="primary" if st.session_state.app_mode == "admin" else "secondary"):
-        st.session_state.app_mode = "admin"; st.rerun()
-    st.sidebar.markdown("---")
-
-# 제작자 텍스트 표시 (구글 머티리얼 아이콘 적용)
 st.sidebar.markdown(f"<p style='text-align: center; color: #888888; font-size: 13px; margin-bottom: 10px;'>{t[lang]['created_by']}</p>", unsafe_allow_html=True)
-
-# 로그아웃 버튼
-if st.sidebar.button(t[lang]["logout_btn"], use_container_width=True, type="secondary"):
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.session_state.is_admin = False
-    st.rerun()
