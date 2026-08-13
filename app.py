@@ -491,41 +491,10 @@ elif st.session_state.app_mode == "tab3":
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df3))}*")
             st.write(t[lang]["search_res_desc"])
             
-            all_filtered_dyes = f_df3['염료명'].tolist()
-            dyes_to_copy_str = ",".join(all_filtered_dyes)
-            btn_text = "Copy All Dye Names" if lang == "EN" else "검색된 전체 염료명 복사하기"
-            success_text = "Copied!" if lang == "EN" else "복사 완료! (프로그램 2에 붙여넣으세요)"
-
-            button_html = f"""
-            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-            <button id="copy-btn" onclick="copyDyes()" style="
-                width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #DCDCDC;
-                padding: 10px 20px; text-align: center; font-size: 16px; font-weight: 600;
-                border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex;
-                align-items: center; justify-content: center; gap: 8px;
-            ">
-                <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
-                <span id="btn-text">{btn_text}</span>
-            </button>
-            <script>
-                function copyDyes() {{
-                    const textToCopy = "{dyes_to_copy_str}";
-                    navigator.clipboard.writeText(textToCopy).then(() => {{
-                        const btn = document.getElementById('copy-btn');
-                        const btnText = document.getElementById('btn-text');
-                        const icon = btn.querySelector('.material-symbols-outlined');
-                        btn.style.backgroundColor = '#4CAF50'; btn.style.color = 'white'; btn.style.border = '1px solid #4CAF50';
-                        icon.innerText = "check_circle"; btnText.innerText = "{success_text}";
-                        setTimeout(() => {{
-                            btn.style.backgroundColor = '#F0F2F6'; btn.style.color = '#31333F'; btn.style.border = '1px solid #DCDCDC';
-                            icon.innerText = "content_copy"; btnText.innerText = "{btn_text}";
-                        }}, 2000);
-                    }});
-                }}
-            </script>
-            """
-            components.html(button_html, height=60)
+            # 버튼이 들어갈 빈 공간을 미리 생성 (데이터 표 상단 위치)
+            btn_container = st.empty()
             
+            # --- 1. 표(st.data_editor) 먼저 렌더링하여 사용자 선택 상태(체크박스) 가져오기 ---
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             
@@ -544,15 +513,84 @@ elif st.session_state.app_mode == "tab3":
                 column_config=col_configs3, disabled=[col for col in disp_cols3 if col != '선택'], key="tab3_editor"
             )
             
+            # 현재 선택된(체크된) 염료 리스트
             curr_checked3 = edited_df3[edited_df3['선택'] == True]['염료명'].tolist()
+            
             st.session_state.tab3_selected_order = [d for d in st.session_state.tab3_selected_order if d in curr_checked3]
             for d in curr_checked3:
                 if d not in st.session_state.tab3_selected_order:
                     st.session_state.tab3_selected_order.append(d)
             
+            # --- 2. 버튼 HTML/JS 생성 및 btn_container에 넣기 ---
+            all_filtered_dyes = f_df3['염료명'].tolist()
+            all_dyes_str = ",".join(all_filtered_dyes) # 검색된 전체 염료
+            sel_dyes_str = ",".join(curr_checked3)     # 표에서 체크된 염료
+            
+            all_btn_text = "Copy All Dyes" if lang == "EN" else "검색된 전체 염료명 복사하기"
+            sel_btn_text = "Copy Selected Dyes" if lang == "EN" else "선택된 염료명 복사하기"
+            success_text = "Copied!" if lang == "EN" else "복사 완료!"
+            alert_text = "No dyes selected." if lang == "EN" else "표에서 먼저 염료를 선택해주세요."
+
+            # 두 개의 버튼을 나란히 배치 (선택 복사는 파란색 톤, 전체 복사는 기존 회색 톤)
+            button_html = f"""
+            <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+            <div style="display: flex; gap: 12px; width: 100%; margin-bottom: 10px;">
+                <button id="copy-sel-btn" onclick="copySelected()" style="
+                    flex: 1; background-color: #E8F0FE; color: #1A73E8; border: 1px solid #C2D7FA;
+                    padding: 10px 20px; text-align: center; font-size: 15px; font-weight: 600;
+                    border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex;
+                    align-items: center; justify-content: center; gap: 8px;
+                ">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">checklist</span>
+                    <span id="sel-btn-text">{sel_btn_text}</span>
+                </button>
+                <button id="copy-all-btn" onclick="copyAll()" style="
+                    flex: 1; background-color: #F0F2F6; color: #31333F; border: 1px solid #DCDCDC;
+                    padding: 10px 20px; text-align: center; font-size: 15px; font-weight: 600;
+                    border-radius: 8px; cursor: pointer; transition: 0.3s; display: flex;
+                    align-items: center; justify-content: center; gap: 8px;
+                ">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
+                    <span id="all-btn-text">{all_btn_text}</span>
+                </button>
+            </div>
+            <script>
+                function copyToClip(text, btnId, textId, origText) {{
+                    if (!text) {{
+                        alert("{alert_text}");
+                        return;
+                    }}
+                    navigator.clipboard.writeText(text).then(() => {{
+                        const btn = document.getElementById(btnId);
+                        const btnText = document.getElementById(textId);
+                        const icon = btn.querySelector('.material-symbols-outlined');
+                        const origBg = btn.style.backgroundColor;
+                        const origColor = btn.style.color;
+                        const origBorder = btn.style.border;
+                        const origIcon = icon.innerText;
+
+                        btn.style.backgroundColor = '#4CAF50'; btn.style.color = 'white'; btn.style.border = '1px solid #4CAF50';
+                        icon.innerText = "check_circle"; btnText.innerText = "{success_text}";
+                        setTimeout(() => {{
+                            btn.style.backgroundColor = origBg; btn.style.color = origColor; btn.style.border = origBorder;
+                            icon.innerText = origIcon; btnText.innerText = origText;
+                        }}, 2000);
+                    }});
+                }}
+                function copySelected() {{ copyToClip("{sel_dyes_str}", "copy-sel-btn", "sel-btn-text", "{sel_btn_text}"); }}
+                function copyAll() {{ copyToClip("{all_dyes_str}", "copy-all-btn", "all-btn-text", "{all_btn_text}"); }}
+            </script>
+            """
+            
+            # 생성한 HTML 영역을 미리 만들어둔 btn_container(데이터 렌더링 위쪽)에 삽입
+            with btn_container:
+                components.html(button_html, height=55)
+
+            # --- 3. 시뮬레이션 그래프 하단부 ---
             sel_dyes3 = st.session_state.tab3_selected_order[:3]
             if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
-                                      
+
+            # ... 이후 기존 하단 그래프(fig3) 렌더링 코드 그대로 유지 ...
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
