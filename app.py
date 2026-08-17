@@ -6,57 +6,14 @@ import os
 import base64
 import streamlit.components.v1 as components
 
-# Streamlit 기본 상단 헤더, 메뉴, 푸터 숨기기
-hide_streamlit_style = """
-    <style>
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    </style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-
 # ==========================================
-# 1. 웹페이지 기본 설정 및 커스텀 CSS (모던 UI 적용)
+# 1. 웹페이지 기본 설정 및 세션 초기화
 # ==========================================
 st.set_page_config(page_title="Ohyoung Dye Finder", page_icon="logo.png", layout="wide")
 
-st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-<style>
-    h2, h3 { font-weight: 700 !important; color: #111 !important; }
-    h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }
-    [data-testid="stSidebar"] p strong {
-        display: block; border-left: 4px solid #1b489d; padding-left: 10px; 
-        margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
-    }
-    hr { margin: 1.5em 0; }
-    
-    /* 🇺🇸 첫 번째 칸(ENGLISH) 버튼 자체에 미국 국기 꽂아넣기 */
-    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > div:nth-child(1) button::before {
-        content: "";
-        display: inline-block;
-        width: 24px;
-        height: 16px;
-        background: url("https://flagcdn.com/w40/us.png") no-repeat center;
-        background-size: contain;
-        margin-right: 8px;
-    }
-
-    /* 🇰🇷 두 번째 칸(KOREAN) 버튼 자체에 한국 국기 꽂아넣기 */
-    [data-testid="stSidebar"] [data-testid="stHorizontalBlock"] > div:nth-child(2) button::before {
-        content: "";
-        display: inline-block;
-        width: 24px;
-        height: 16px;
-        background: url("https://flagcdn.com/w40/kr.png") no-repeat center;
-        background-size: contain;
-        margin-right: 8px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
+if "lang" not in st.session_state: st.session_state.lang = "EN"
+lang = st.session_state.lang
+if "app_mode" not in st.session_state: st.session_state.app_mode = "tab3"
 
 # ==========================================
 # 2. 다국어 번역 데이터 사전 정의 (EN / KO)
@@ -146,17 +103,106 @@ t = {
     }
 }
 
-if "lang" not in st.session_state: st.session_state.lang = "EN"
-lang = st.session_state.lang
-if "app_mode" not in st.session_state: st.session_state.app_mode = "tab3"
-
 def toggle_all_groups(app_mode_str, all_groups_list):
     master_state = st.session_state[f"chk_all_{app_mode_str}"]
     for g in all_groups_list:
         st.session_state[f"grp_{g}_{app_mode_str}"] = master_state
 
 # ==========================================
-# 3. 사이드바 - 메뉴 구성
+# 3. 로고 인코딩 및 UI 커스텀 CSS (상단 메뉴바 & 언어 버튼 정렬)
+# ==========================================
+try:
+    with open("logo.png", "rb") as image_file:
+        logo_base64 = base64.b64encode(image_file.read()).decode()
+except Exception:
+    logo_base64 = ""
+
+st.markdown(f"""
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<style>
+    /* Streamlit 기본 헤더 및 불필요한 요소 숨기기 */
+    [data-testid="stHeader"], #MainMenu, footer {{ display: none !important; }}
+    [data-testid="collapsedControl"], [data-testid="stSidebarCollapseButton"], [data-testid="stSidebarHeader"] {{
+        display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important;
+    }}
+
+    /* 기본 텍스트 스타일링 */
+    h2, h3 {{ font-weight: 700 !important; color: #111 !important; }}
+    h3 {{ border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }}
+    hr {{ margin: 1.5em 0; }}
+    
+    /* 사이드바 그룹명 스타일 */
+    [data-testid="stSidebar"] p strong {{
+        display: block; border-left: 4px solid #1b489d; padding-left: 10px; 
+        margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
+    }}
+
+    /* 본문 및 사이드바 상단 여백 설정 */
+    .block-container {{ padding-top: 80px !important; }}
+    [data-testid="stSidebar"] {{ padding-top: 60px !important; }}
+    [data-testid="stSidebarUserContent"] {{ padding-top: 10px !important; }}
+    
+    /* 🌟 새로운 상단 고정 메뉴바 디자인 (모던 UI) 🌟 */
+    .fixed-header {{
+        position: fixed; top: 0; left: 0; width: 100vw; height: 60px;
+        background-color: #ffffff; box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+        z-index: 999998; display: flex; align-items: center; padding-left: 20px;
+        border-bottom: 1px solid #eaeaea;
+    }}
+    .fixed-header img {{ height: 35px; margin-right: 12px; }}
+    .fixed-header h2 {{ margin: 0; padding: 0; font-size: 24px; font-weight: 700; color: #31333F; }}
+
+    /* 🌟 우측 상단 언어 전환 버튼 타겟팅 (top-menu-marker) 🌟 */
+    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) {{
+        position: fixed !important;
+        top: 11px !important;
+        right: 20px !important; /* 화면 우측 끝으로 밀착 */
+        width: 150px !important; /* 버튼 2개가 들어갈 맞춤 너비 */
+        z-index: 999999 !important;
+        align-items: center !important; 
+        gap: 0.5rem !important;
+    }}
+    div.element-container:has(#top-menu-marker) {{
+        display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
+    }}
+    
+    /* 버튼 둥글기 및 높이 디자인 조절 */
+    div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div.stButton > button {{
+        border-radius: 8px; 
+        padding: 0px 5px;
+        height: 38px;
+        min-height: 38px;
+        margin: 0 !important; 
+    }}
+</style>
+
+<!-- 상단 메뉴바 HTML 렌더링 -->
+<div class="fixed-header">
+    <img src="data:image/png;base64,{logo_base64}" onerror="this.style.display='none'">
+    <h2>{t[lang]['header']}</h2>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ==========================================
+# 4. 언어 전환 버튼 배치 (우측 상단 고정)
+# ==========================================
+# st.columns를 생성하고 CSS를 통해 통째로 우측 상단으로 띄워 올립니다.
+lang_cols = st.columns(2)
+with lang_cols[0]:
+    if st.button("🇺🇸 EN", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
+        st.session_state.lang = "EN"
+        st.rerun()
+    # 이 마커가 포함된 st.columns 전체를 CSS로 추적하여 상단바 위로 이동시킵니다.
+    st.markdown('<div id="top-menu-marker"></div>', unsafe_allow_html=True)
+with lang_cols[1]:
+    if st.button("🇰🇷 KO", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
+        st.session_state.lang = "KO"
+        st.rerun()
+
+
+# ==========================================
+# 5. 사이드바 - 메뉴 구성
 # ==========================================
 st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
 
@@ -167,106 +213,16 @@ if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" i
 if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab3" else "secondary"):
     st.session_state.app_mode = "tab3"; st.rerun()
 
+st.sidebar.markdown("---")
 
-# ==========================================
-# 4. 메인 화면 헤더 및 우측 상단 언어 전환 드롭다운
-# ==========================================
-lang_col, _ = st.columns([1, 0.01]) 
-
-with lang_col:
-    st.markdown("<div id='lang-dropdown-marker'></div>", unsafe_allow_html=True)
-    
-    lang_options = ["English (EN)", "한국어 (KO)"]
-    current_idx = 0 if st.session_state.lang == "EN" else 1
-    
-    selected_lang = st.selectbox(
-        "Language", 
-        options=lang_options, 
-        index=current_idx, 
-        label_visibility="collapsed"
-    )
-    
-    if selected_lang == "English (EN)" and st.session_state.lang != "EN":
-        st.session_state.lang = "EN"
-        st.rerun()
-    elif selected_lang == "한국어 (KO)" and st.session_state.lang != "KO":
-        st.session_state.lang = "KO"
-        st.rerun()
-
-if os.path.exists("logo.png"):
-    with open("logo.png", "rb") as f:
-        img_base64 = base64.b64encode(f.read()).decode()
-    header_html = f'<img src="data:image/png;base64,{img_base64}" class="fixed-logo"><h1 class="fixed-title">{t[lang]["header"]}</h1>'
-else:
-    header_html = f'<span class="material-symbols-outlined fixed-icon">science</span><h1 class="fixed-title">{t[lang]["header"]}</h1>'
-
-fixed_header_style = f"""
-<style>
-/* --- 부모(메인 화면)의 계층을 끌어올려 사이드바 덮기 --- */
-section.main {{ z-index: 99999 !important; }}
-section[data-testid="stSidebar"] {{ z-index: 10 !important; }}
-
-/* --- 1. 상단 고정 하얀색 메뉴바 --- */
-.fixed-header-container {{
-    position: fixed; top: 0; left: 0; width: 100vw; height: 70px;
-    background-color: white; z-index: 99999999 !important;
-    box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
-    display: flex; align-items: center; padding-left: 2rem;
-}}
-.fixed-logo {{ height: 40px; margin-right: 15px; }}
-.fixed-icon {{ font-size: 40px !important; margin-right: 15px; color: #1E3A8A; }}
-.fixed-title {{ margin: 0 !important; font-size: 1.8rem !important; font-weight: 700 !important; color: #111 !important; }}
-
-/* --- 2. 언어 드롭다운을 메뉴바 우측 상단 중앙에 고정 --- */
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) {{
-    position: fixed !important; 
-    top: 35px !important; 
-    transform: translateY(-50%) !important; 
-    right: 30px !important;
-    width: 180px !important;
-    z-index: 100000000 !important; 
-    background: transparent !important;
-}}
-
-/* --- 3. 투명하고 깔끔한 드롭다운 디자인 --- */
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-testid="element-container"]:has(#lang-dropdown-marker) {{
-    display: none !important;
-}}
-
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] > div {{
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    cursor: pointer !important;
-}}
-
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] span,
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] p,
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] div {{
-    color: #1b489d !important; 
-    font-weight: 600 !important;
-    font-size: 17px !important; 
-}}
-
-div[data-testid="stHorizontalBlock"]:has(#lang-dropdown-marker) div[data-baseweb="select"] > div:hover {{
-    background-color: transparent !important;
-}}
-
-/* --- 4. 사이드바 빈 공간 없애기 --- */
-.block-container {{ padding-top: 90px !important; }} 
-[data-testid="stSidebar"] {{ padding-top: 0px !important; }}
-[data-testid="stSidebarHeader"] {{ display: none !important; }} 
-[data-testid="stSidebarContent"] {{ padding-top: 70px !important; }} 
-[data-testid="stSidebarUserContent"] {{ padding-top: 10px !important; }} 
-</style>
-
-<div class="fixed-header-container">{header_html}</div>
-"""
-st.markdown(fixed_header_style, unsafe_allow_html=True)
-
+# =====================================================================
+# 데이터 전처리 맵핑 정보 (이후 코드는 동일하게 유지)
+# =====================================================================
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
+
+# if st.session_state.app_mode == "tab1": ... (기존 코드 계속 이어짐)
 
 # =====================================================================
 # [App 1] 요구견뢰도 스펙 매칭 전용
