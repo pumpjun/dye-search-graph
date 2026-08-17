@@ -149,10 +149,10 @@ st.markdown(f"""
         z-index: 999998; display: flex; align-items: center; padding-left: 20px;
         border-bottom: 1px solid #eaeaea;
     }}
-    .fixed-header img {
+    .fixed-header img {{
         width: 45px; 
         margin-right: 12px;
-    }
+    }}
     .fixed-header h2 {{ margin: 0; padding: 0; font-size: 24px; font-weight: 700; color: #31333F; }}
 
     /* 🌟 우측 상단 언어 전환 버튼 타겟팅 (top-menu-marker) 🌟 */
