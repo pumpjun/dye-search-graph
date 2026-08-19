@@ -58,7 +58,11 @@ t = {
         "crit_p_acid": "Persp(Acid)",
         "crit_p_alk": "Persp(Alkali)",
         "crit_wash": "Washing",
-        "crit_chlor": "Chlorine"
+        "crit_chlor": "Chlorine",
+        "rep_wash_title": "Repeated Wash",
+        "rep_wash_times_label": "Wash Cycles",
+        "rep_wash_grade_label": "Rep. Wash Grade",
+        "rep_wash_none": "None",
     },
     "KO": {
         "header": "Ohyoung Dye Finder",
@@ -99,9 +103,22 @@ t = {
         "crit_p_acid": "땀(산성)",
         "crit_p_alk": "땀(알칼리)",
         "crit_wash": "세탁",
-        "crit_chlor": "염소수"
+        "crit_chlor": "염소수",
+        "rep_wash_title": "반복세탁",
+        "rep_wash_times_label": "세탁 횟수 선택",
+        "rep_wash_grade_label": "반복세탁 요구 등급",
+        "rep_wash_none": "적용 안 함",
     }
 }
+
+# 반복세탁 사이클 옵션 정의
+cycle_opts_en = [t["EN"]["rep_wash_none"], "5 Cycles", "10 Cycles", "15 Cycles", "20 Cycles", "30 Cycles", "40 Cycles", "50 Cycles"]
+cycle_opts_ko = [t["KO"]["rep_wash_none"], "5회", "10회", "15회", "20회", "30회", "40회", "50회"]
+
+def get_excel_cycle_string(selected_val, lang):
+    if lang == "KO": return selected_val
+    mapping = {"5 Cycles": "5회", "10 Cycles": "10회", "15 Cycles": "15회", "20 Cycles": "20회", "30 Cycles": "30회", "40 Cycles": "40회", "50 Cycles": "50회"}
+    return mapping.get(selected_val)
 
 def toggle_all_groups(app_mode_str, all_groups_list):
     master_state = st.session_state[f"chk_all_{app_mode_str}"]
@@ -109,7 +126,7 @@ def toggle_all_groups(app_mode_str, all_groups_list):
         st.session_state[f"grp_{g}_{app_mode_str}"] = master_state
 
 # ==========================================
-# 3. 로고 인코딩 및 UI 커스텀 CSS (상단 메뉴바 & 언어 버튼 정렬)
+# 3. 로고 인코딩 및 UI 커스텀 CSS
 # ==========================================
 try:
     with open("logo.png", "rb") as image_file:
@@ -120,66 +137,40 @@ except Exception:
 st.markdown(f"""
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 <style>
-    /* Streamlit 기본 헤더 및 불필요한 요소 숨기기 */
     [data-testid="stHeader"], #MainMenu, footer {{ display: none !important; }}
     [data-testid="collapsedControl"], [data-testid="stSidebarCollapseButton"], [data-testid="stSidebarHeader"] {{
         display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important;
     }}
-
-    /* 기본 텍스트 스타일링 */
     h2, h3 {{ font-weight: 700 !important; color: #111 !important; }}
     h3 {{ border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 24px; margin-top: 10px; }}
     hr {{ margin: 1.5em 0; }}
-    
-    /* 사이드바 그룹명 스타일 */
     [data-testid="stSidebar"] p strong {{
         display: block; border-left: 4px solid #1b489d; padding-left: 10px; 
         margin-top: 20px; margin-bottom: 8px; font-size: 16px; color: #333;
     }}
-
-    /* 본문 및 사이드바 상단 여백 설정 */
     .block-container {{ padding-top: 80px !important; }}
     [data-testid="stSidebar"] {{ padding-top: 60px !important; }}
     [data-testid="stSidebarUserContent"] {{ padding-top: 10px !important; }}
-    
-    /* 🌟 새로운 상단 고정 메뉴바 디자인 (모던 UI) 🌟 */
     .fixed-header {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 60px;
         background-color: #ffffff; box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
         z-index: 999998; display: flex; align-items: center; padding-left: 20px;
         border-bottom: 1px solid #eaeaea;
     }}
-    .fixed-header img {{
-        width: 45px; 
-        margin-right: 12px;
-    }}
+    .fixed-header img {{ width: 45px; margin-right: 12px; }}
     .fixed-header h2 {{ margin: 0; padding: 0; font-size: 24px; font-weight: 700; color: #31333F; }}
-
-    /* 🌟 우측 상단 언어 전환 버튼 타겟팅 (top-menu-marker) 🌟 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) {{
-        position: fixed !important;
-        top: 11px !important;
-        right: 20px !important; /* 화면 우측 끝으로 밀착 */
-        width: 150px !important; /* 버튼 2개가 들어갈 맞춤 너비 */
-        z-index: 999999 !important;
-        align-items: center !important; 
-        gap: 0.5rem !important;
+        position: fixed !important; top: 11px !important; right: 20px !important; 
+        width: 150px !important; z-index: 999999 !important;
+        align-items: center !important; gap: 0.5rem !important;
     }}
     div.element-container:has(#top-menu-marker) {{
         display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important;
     }}
-    
-    /* 버튼 둥글기 및 높이 디자인 조절 */
     div[data-testid="stHorizontalBlock"]:has(#top-menu-marker) div.stButton > button {{
-        border-radius: 8px; 
-        padding: 0px 5px;
-        height: 38px;
-        min-height: 38px;
-        margin: 0 !important; 
+        border-radius: 8px; padding: 0px 5px; height: 38px; min-height: 38px; margin: 0 !important; 
     }}
 </style>
-
-<!-- 상단 메뉴바 HTML 렌더링 -->
 <div class="fixed-header">
     <img src="data:image/png;base64,{logo_base64}" onerror="this.style.display='none'">
     <h2>{t[lang]['header']}</h2>
@@ -188,27 +179,22 @@ st.markdown(f"""
 
 
 # ==========================================
-# 4. 언어 전환 버튼 배치 (우측 상단 고정)
+# 4. 언어 전환 버튼 배치
 # ==========================================
-# st.columns를 생성하고 CSS를 통해 통째로 우측 상단으로 띄워 올립니다.
 lang_cols = st.columns(2)
 with lang_cols[0]:
     if st.button("🇺🇸 EN", use_container_width=True, type="primary" if lang == "EN" else "secondary"):
-        st.session_state.lang = "EN"
-        st.rerun()
-    # 이 마커가 포함된 st.columns 전체를 CSS로 추적하여 상단바 위로 이동시킵니다.
+        st.session_state.lang = "EN"; st.rerun()
     st.markdown('<div id="top-menu-marker"></div>', unsafe_allow_html=True)
 with lang_cols[1]:
     if st.button("🇰🇷 KO", use_container_width=True, type="primary" if lang == "KO" else "secondary"):
-        st.session_state.lang = "KO"
-        st.rerun()
+        st.session_state.lang = "KO"; st.rerun()
 
 
 # ==========================================
 # 5. 사이드바 - 메뉴 구성
 # ==========================================
 st.sidebar.markdown(f"**{t[lang]['menu_title']}**")
-
 if st.sidebar.button(t[lang]["tab1"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab1" else "secondary"):
     st.session_state.app_mode = "tab1"; st.rerun()
 if st.sidebar.button(t[lang]["tab2"], use_container_width=True, type="primary" if st.session_state.app_mode == "tab2" else "secondary"):
@@ -218,14 +204,10 @@ if st.sidebar.button(t[lang]["tab3"], use_container_width=True, type="primary" i
 
 st.sidebar.markdown("---")
 
-# =====================================================================
-# 데이터 전처리 맵핑 정보 (이후 코드는 동일하게 유지)
-# =====================================================================
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk', 
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
 
-# if st.session_state.app_mode == "tab1": ... (기존 코드 계속 이어짐)
 
 # =====================================================================
 # [App 1] 요구견뢰도 스펙 매칭 전용
@@ -267,6 +249,21 @@ if st.session_state.app_mode == "tab1":
                 display_label = t[lang][criteria_map.get(c, c)]
                 max_val = 7.0 if c == '일광' else 5.0
                 req1[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab1")
+
+        # --- 반복세탁 UI (Tab 1) ---
+        st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"**{t[lang]['rep_wash_title']}**")
+        cycles_list = cycle_opts_en if lang == "EN" else cycle_opts_ko
+        
+        sel_cycle1 = st.sidebar.selectbox(t[lang]["rep_wash_times_label"], cycles_list, key="sel_rep_wash_tab1")
+        rep_wash_min1 = None
+        rep_wash_col1 = None
+
+        if sel_cycle1 != t[lang]["rep_wash_none"]:
+            rep_wash_min1 = st.sidebar.slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key="sld_rep_wash_tab1")
+            # [수정] 엑셀 컬럼명 그대로 매칭되도록 변경 ("반복세탁_" 삭제)
+            rep_wash_col1 = get_excel_cycle_string(sel_cycle1, lang)
+        # ---------------------------
                 
         st.info(f"**{t[lang]['instruction_text']}**", icon=":material/info:")
         
@@ -274,16 +271,26 @@ if st.session_state.app_mode == "tab1":
             st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df1 = df1[df1['염료그룹'].isin(selected_groups1)].copy()
+            
             for c, min_val in req1.items():
                 if c in f_df1.columns:
                     f_df1[c] = pd.to_numeric(f_df1[c], errors='coerce')
                     f_df1 = f_df1[f_df1[c] >= min_val]
+            
+            # 반복세탁 필터링 로직
+            if rep_wash_col1 and rep_wash_col1 in f_df1.columns:
+                f_df1[rep_wash_col1] = pd.to_numeric(f_df1[rep_wash_col1], errors='coerce')
+                f_df1 = f_df1[f_df1[rep_wash_col1] >= rep_wash_min1]
                     
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df1))}*")
             
             disp_cols1 = ['염료명'] + [c for c in criteria_list if c in f_df1.columns]
+            if rep_wash_col1 and rep_wash_col1 in f_df1.columns:
+                disp_cols1.append(rep_wash_col1)
+                
             st.dataframe(f_df1[disp_cols1], hide_index=True, use_container_width=True)
+
 
 # =====================================================================
 # [App 2] 상용성 그래프 단독
@@ -294,7 +301,6 @@ elif st.session_state.app_mode == "tab2":
         xls = pd.ExcelFile(file)
         parsed_sheets = {}
         target_sheets = [s for s in xls.sheet_names if s not in ['그래프', 'SREF', 'H-E SREF']]
-        
         for sheet in target_sheets:
             df = pd.read_excel(xls, sheet_name=sheet, header=None)
             df = df.dropna(how='all')
@@ -305,13 +311,11 @@ elif st.session_state.app_mode == "tab2":
                     header_idx = idx
                     break
             if header_idx is None: continue
-            
             header_row = df.iloc[header_idx]
             time_mapping = {}
             for c_idx, val in enumerate(header_row):
                 v_str = str(val).strip().split('.')[0]
                 if v_str in ['0', '5', '20', '25', '40', '80', '100']: time_mapping[int(v_str)] = c_idx
-            
             sorted_times = sorted(time_mapping.keys())
             dye_list = []
             for idx in range(header_idx + 1, len(df)):
@@ -394,6 +398,7 @@ elif st.session_state.app_mode == "tab2":
                 elif max_dev < 12: st.warning(t[lang]["diag_warn"], icon=":material/warning:")
                 else: st.error(t[lang]["diag_danger"], icon=":material/dangerous:")
 
+
 # =====================================================================
 # [App 3] 통합 매칭 및 시뮬레이션
 # =====================================================================
@@ -435,25 +440,44 @@ elif st.session_state.app_mode == "tab3":
                 max_val = 7.0 if c == '일광' else 5.0
                 req3[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_tab3")
 
+        # --- 반복세탁 UI (Tab 3) ---
+        st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"**{t[lang]['rep_wash_title']}**")
+        cycles_list = cycle_opts_en if lang == "EN" else cycle_opts_ko
+        
+        sel_cycle3 = st.sidebar.selectbox(t[lang]["rep_wash_times_label"], cycles_list, key="sel_rep_wash_tab3")
+        rep_wash_min3 = None
+        rep_wash_col3 = None
+
+        if sel_cycle3 != t[lang]["rep_wash_none"]:
+            rep_wash_min3 = st.sidebar.slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key="sld_rep_wash_tab3")
+            # [수정] 엑셀 컬럼명 그대로 매칭되도록 변경 ("반복세탁_" 삭제)
+            rep_wash_col3 = get_excel_cycle_string(sel_cycle3, lang)
+        # ---------------------------
+
         st.info(f"**{t[lang]['instruction_text']}**", icon=":material/info:")
         
         if not selected_groups3:
             st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df3 = df3[df3['염료그룹'].isin(selected_groups3)].copy()
+            
             for c, min_val in req3.items():
                 if c in f_df3.columns:
                     f_df3[c] = pd.to_numeric(f_df3[c], errors='coerce')
                     f_df3 = f_df3[f_df3[c] >= min_val]
+            
+            # 반복세탁 필터링 로직
+            if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
+                f_df3[rep_wash_col3] = pd.to_numeric(f_df3[rep_wash_col3], errors='coerce')
+                f_df3 = f_df3[f_df3[rep_wash_col3] >= rep_wash_min3]
                     
             st.subheader(t[lang]["search_res_hdr"])
             st.markdown(f"*{t[lang]['search_res_sub'].format(count=len(f_df3))}*")
             st.write(t[lang]["search_res_desc"])
             
-            # 버튼이 들어갈 빈 공간을 미리 생성 (데이터 표 상단 위치)
             btn_container = st.empty()
             
-            # --- 1. 표(st.data_editor) 먼저 렌더링하여 사용자 선택 상태(체크박스) 가져오기 ---
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             
@@ -461,9 +485,15 @@ elif st.session_state.app_mode == "tab3":
                 "선택": st.column_config.CheckboxColumn(label=t[lang]["col_select"], width="small"),
                 "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=150)
             }
-            for c in disp_cols3[3:]:
+            for c in disp_cols3[2:]:
                 col_configs3[c] = st.column_config.NumberColumn(label=t[lang][criteria_map.get(c, c)], width=80)
-                
+            
+            # 반복세탁 컬럼 동적 추가 및 스타일링
+            if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
+                disp_cols3.append(rep_wash_col3)
+                display_col_name = f"Rep.Wash ({sel_cycle3.split()[0]})" if lang == "EN" else f"반복세탁 ({sel_cycle3})"
+                col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=display_col_name, width=100)
+
             if "tab3_selected_order" not in st.session_state:
                 st.session_state.tab3_selected_order = []
                 
@@ -472,7 +502,6 @@ elif st.session_state.app_mode == "tab3":
                 column_config=col_configs3, disabled=[col for col in disp_cols3 if col != '선택'], key="tab3_editor"
             )
             
-            # 현재 선택된(체크된) 염료 리스트
             curr_checked3 = edited_df3[edited_df3['선택'] == True]['염료명'].tolist()
             
             st.session_state.tab3_selected_order = [d for d in st.session_state.tab3_selected_order if d in curr_checked3]
@@ -480,17 +509,15 @@ elif st.session_state.app_mode == "tab3":
                 if d not in st.session_state.tab3_selected_order:
                     st.session_state.tab3_selected_order.append(d)
             
-            # --- 2. 버튼 HTML/JS 생성 및 btn_container에 넣기 ---
             all_filtered_dyes = f_df3['염료명'].tolist()
-            all_dyes_str = ",".join(all_filtered_dyes) # 검색된 전체 염료
-            sel_dyes_str = ",".join(curr_checked3)     # 표에서 체크된 염료
+            all_dyes_str = ",".join(all_filtered_dyes) 
+            sel_dyes_str = ",".join(curr_checked3)     
             
             all_btn_text = "Copy All Dyes" if lang == "EN" else "검색된 전체 염료명 복사하기"
             sel_btn_text = "Copy Selected Dyes" if lang == "EN" else "선택된 염료명 복사하기"
             success_text = "Copied!" if lang == "EN" else "복사 완료!"
             alert_text = "No dyes selected." if lang == "EN" else "표에서 먼저 염료를 선택해주세요."
 
-            # 두 개의 버튼을 나란히 배치 (선택 복사는 파란색 톤, 전체 복사는 기존 회색 톤)
             button_html = f"""
             <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
             <div style="display: flex; gap: 12px; width: 100%; margin-bottom: 10px;">
@@ -515,10 +542,7 @@ elif st.session_state.app_mode == "tab3":
             </div>
             <script>
                 function copyToClip(text, btnId, textId, origText) {{
-                    if (!text) {{
-                        alert("{alert_text}");
-                        return;
-                    }}
+                    if (!text) {{ alert("{alert_text}"); return; }}
                     navigator.clipboard.writeText(text).then(() => {{
                         const btn = document.getElementById(btnId);
                         const btnText = document.getElementById(textId);
@@ -541,15 +565,12 @@ elif st.session_state.app_mode == "tab3":
             </script>
             """
             
-            # 생성한 HTML 영역을 미리 만들어둔 btn_container(데이터 렌더링 위쪽)에 삽입
             with btn_container:
                 components.html(button_html, height=55)
 
-            # --- 3. 시뮬레이션 그래프 하단부 ---
             sel_dyes3 = st.session_state.tab3_selected_order[:3]
             if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
 
-            # ... 이후 기존 하단 그래프(fig3) 렌더링 코드 그대로 유지 ...
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
             if not sel_dyes3:
