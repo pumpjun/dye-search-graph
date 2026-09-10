@@ -40,7 +40,7 @@ t = {
         "col_name": "Dye Name",
         "warn_limit": "Only up to 3 selected dyes are shown in click order.",
         "sim_hdr": ":material/monitoring: Compatibility Simulation",
-        "sel_summary_hdr": ":material/fact_check: Selected Dyes Fastness Summary",  # 추가됨
+        "sel_summary_hdr": ":material/fact_check: Selected Dyes Fastness Summary",
         "no_match": "No dyes match the criteria.",
         "select_prompt": "Please check the **[Select]** checkbox above to compare dyes.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
         "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.",
@@ -86,7 +86,7 @@ t = {
         "col_name": "염료명",
         "warn_limit": "안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.",
         "sim_hdr": ":material/monitoring: 선택 염료 상용성 시뮬레이션",
-        "sel_summary_hdr": ":material/fact_check: 선택 염료 견뢰도 요약",  # 추가됨
+        "sel_summary_hdr": ":material/fact_check: 선택 염료 견뢰도 요약",
         "no_match": "검색 조건에 맞는 염료가 없습니다.",
         "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.",
         "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.",
@@ -378,14 +378,7 @@ elif st.session_state.app_mode == "tab2":
             fig2.add_vline(x=25, line_dash="dash", line_color="gray")
             st.plotly_chart(fig2, use_container_width=True)
             
-            st.markdown(f"**{t[lang]['summary_hdr']}**")
-            table_data2 = []
-            for sheet_name, dye in selected_dyes2:
-                row_dict = {t[lang]["col_group"]: sheet_name, t[lang]["col_name"]: dye["name"]}
-                for time_val, v in zip(dye["times"], dye["values"]):
-                    row_dict[f"{time_val}{t[lang]['minute_unit']}"] = f"{v:.1f}%"
-                table_data2.append(row_dict)
-            st.dataframe(pd.DataFrame(table_data2), hide_index=True, use_container_width=True)
+            # 수치 요약 표 제거됨
             
             if len(selected_dyes2) >= 2:
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -630,14 +623,7 @@ elif st.session_state.app_mode == "tab3":
                     fig3.add_vline(x=25, line_dash="dash", line_color="gray")
                     st.plotly_chart(fig3, use_container_width=True)
                     
-                    st.markdown(f"**{t[lang]['summary_hdr']}**")
-                    tb_data3 = []
-                    for name in sel_dyes3:
-                        row = df3[df3['염료명'] == name].iloc[0]
-                        rd = {t[lang]["col_name"]: name}
-                        for tc in val_cols3: rd[f"{tc}{t[lang]['minute_unit']}"] = f"{row[tc]:.1f}%" if pd.notna(row[tc]) else "-"
-                        tb_data3.append(rd)
-                    st.dataframe(pd.DataFrame(tb_data3), hide_index=True, use_container_width=True)
+                    # 수치 요약 표 제거됨
                     
                     if len(sel_dyes3) >= 2:
                         st.markdown("<br>", unsafe_allow_html=True)
