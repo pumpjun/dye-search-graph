@@ -40,6 +40,7 @@ t = {
         "col_name": "Dye Name",
         "warn_limit": "Only up to 3 selected dyes are shown in click order.",
         "sim_hdr": ":material/monitoring: Compatibility Simulation",
+        "sel_summary_hdr": ":material/fact_check: Selected Dyes Fastness Summary",  # 추가됨
         "no_match": "No dyes match the criteria.",
         "select_prompt": "Please check the **[Select]** checkbox above to compare dyes.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
         "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.",
@@ -85,6 +86,7 @@ t = {
         "col_name": "염료명",
         "warn_limit": "안정적인 그래프 비교를 위해 선택하신 순서대로 최대 3개까지만 표시됩니다.",
         "sim_hdr": ":material/monitoring: 선택 염료 상용성 시뮬레이션",
+        "sel_summary_hdr": ":material/fact_check: 선택 염료 견뢰도 요약",  # 추가됨
         "no_match": "검색 조건에 맞는 염료가 없습니다.",
         "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.",
         "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.",
@@ -261,7 +263,6 @@ if st.session_state.app_mode == "tab1":
 
         if sel_cycle1 != t[lang]["rep_wash_none"]:
             rep_wash_min1 = st.sidebar.slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key="sld_rep_wash_tab1")
-            # [수정] 엑셀 컬럼명 그대로 매칭되도록 변경 ("반복세탁_" 삭제)
             rep_wash_col1 = get_excel_cycle_string(sel_cycle1, lang)
         # ---------------------------
                 
@@ -277,7 +278,6 @@ if st.session_state.app_mode == "tab1":
                     f_df1[c] = pd.to_numeric(f_df1[c], errors='coerce')
                     f_df1 = f_df1[f_df1[c] >= min_val]
             
-            # 반복세탁 필터링 로직
             if rep_wash_col1 and rep_wash_col1 in f_df1.columns:
                 f_df1[rep_wash_col1] = pd.to_numeric(f_df1[rep_wash_col1], errors='coerce')
                 f_df1 = f_df1[f_df1[rep_wash_col1] >= rep_wash_min1]
@@ -451,7 +451,6 @@ elif st.session_state.app_mode == "tab3":
 
         if sel_cycle3 != t[lang]["rep_wash_none"]:
             rep_wash_min3 = st.sidebar.slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key="sld_rep_wash_tab3")
-            # [수정] 엑셀 컬럼명 그대로 매칭되도록 변경 ("반복세탁_" 삭제)
             rep_wash_col3 = get_excel_cycle_string(sel_cycle3, lang)
         # ---------------------------
 
@@ -467,7 +466,6 @@ elif st.session_state.app_mode == "tab3":
                     f_df3[c] = pd.to_numeric(f_df3[c], errors='coerce')
                     f_df3 = f_df3[f_df3[c] >= min_val]
             
-            # 반복세탁 필터링 로직
             if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
                 f_df3[rep_wash_col3] = pd.to_numeric(f_df3[rep_wash_col3], errors='coerce')
                 f_df3 = f_df3[f_df3[rep_wash_col3] >= rep_wash_min3]
@@ -488,7 +486,6 @@ elif st.session_state.app_mode == "tab3":
             for c in disp_cols3[2:]:
                 col_configs3[c] = st.column_config.NumberColumn(label=t[lang][criteria_map.get(c, c)], width=80)
             
-            # 반복세탁 컬럼 동적 추가 및 스타일링
             if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
                 disp_cols3.append(rep_wash_col3)
                 display_col_name = f"Rep.Wash ({sel_cycle3.split()[0]})" if lang == "EN" else f"반복세탁 ({sel_cycle3})"
@@ -568,21 +565,49 @@ elif st.session_state.app_mode == "tab3":
             with btn_container:
                 components.html(button_html, height=55)
 
-            sel_dyes3 = st.session_state.tab3_selected_order[:3]
+            # === [수정된 로직]: 선택된 염료 3개를 A열(색순서) 기준으로 정렬 ===
+            sel_dyes3_click_order = st.session_state.tab3_selected_order[:3]
             if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
+            
+            # 엑셀의 첫 번째 컬럼(A열)을 정렬 기준으로 삼음
+            sort_col = df3.columns[0] 
+            
+            # A열이 숫자로 정상 변환되도록 처리
+            df3[sort_col] = pd.to_numeric(df3[sort_col], errors='coerce')
+            
+            # 선택된 최대 3개의 염료들을 필터링하고 A열 오름차순으로 정렬
+            sorted_sel_df = df3[df3['염료명'].isin(sel_dyes3_click_order)].sort_values(by=sort_col)
+            
+            # 최종 정렬된 염료명 리스트 반환 (이 순서대로 색상이 Yellow -> Red -> Blue 배정됨)
+            sel_dyes3 = sorted_sel_df['염료명'].tolist()
+            # ================================================================
 
             st.markdown("---")
             st.subheader(t[lang]["sim_hdr"])
+            
             if not sel_dyes3:
                 st.info(f"{t[lang]['select_prompt']}", icon=":material/touch_app:")
             else:
+                # === [추가된 로직]: 선택된 염료 직관적 견뢰도 미니 테이블 ===
+                st.markdown(f"**{t[lang]['sel_summary_hdr']}**")
+                
+                # 미니 테이블에 표시할 컬럼 (선택 박스 제외하고 염료명 + 견뢰도 스펙만)
+                summary_disp_cols = ['염료명'] + [c for c in criteria_list if c in df3.columns]
+                if rep_wash_col3 and rep_wash_col3 in df3.columns:
+                    summary_disp_cols.append(rep_wash_col3)
+                
+                # 위에서 만들어둔 column_config 재사용하여 깔끔하게 표시
+                st.dataframe(sorted_sel_df[summary_disp_cols], hide_index=True, use_container_width=True, column_config=col_configs3)
+                st.markdown("<br>", unsafe_allow_html=True)
+                # ===========================================================
+
                 time_pts3 = ['0', '5', '20', '25', '40', '80', '100']
                 val_cols3 = [tc for tc in time_pts3 if tc in df3.columns]
                 if len(val_cols3) < 2:
                     st.warning(t[lang]["err_time_data"], icon=":material/warning:")
                 else:
                     fig3 = go.Figure()
-                    colors = ['#FFD700', '#FF4B4B', '#1F77B4']
+                    colors = ['#FFD700', '#FF4B4B', '#1F77B4'] # Yellow, Red, Blue 순서 보장됨
                     for idx, name in enumerate(sel_dyes3):
                         row = df3[df3['염료명'] == name].iloc[0]
                         color = colors[idx % len(colors)]
