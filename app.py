@@ -212,8 +212,14 @@ html, body, .stApp, .stApp button, .stApp input, .stApp textarea, .stApp select,
 .stApp { background: #f4f6fa !important; }
 [data-testid="stHeader"], #MainMenu, footer { display: none !important; }
 [data-testid="collapsedControl"], [data-testid="stSidebarCollapseButton"], [data-testid="stSidebarHeader"] { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-.block-container { padding-top: 84px !important; padding-bottom: 3rem !important; padding-left: 1.75rem !important; padding-right: 1.75rem !important; max-width: none !important; }
+.block-container { padding-top: 76px !important; padding-bottom: 3rem !important; padding-left: 1.75rem !important; padding-right: 1.75rem !important; max-width: none !important; }
 
+/* 화면에 안 보이는 칸(스타일만 있는 칸 · 고정된 상단 바 칸)이 차지하는 세로 간격 제거 */
+[data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] style):not(:has(p, img, span, table)),
+.block-container [data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] style):not(:has(p, img, span, table)),
+.block-container [data-testid="stLayoutWrapper"]:has(> .st-key-topbar),
+.block-container > div > [data-testid="stVerticalBlock"] > div:has(> .st-key-topbar) { margin-bottom: -1rem !important; }
+.page-sub { margin-bottom: 12px !important; }
 /* ---------- 상단 바: 네이비 고정 바 ---------- */
 .st-key-topbar {
     position: fixed !important; top: 0; left: 0; right: 0; height: 60px; z-index: 999990;
@@ -413,8 +419,8 @@ criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid'
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
 # 반쪽 화면에 표가 다 들어가도록 표 머리글에만 쓰는 짧은 이름
 crit_short = {
-    "EN": {'일광': 'Light', '땀일광(산성)': 'P.Light(Ac)', '땀일광(알칼리)': 'P.Light(Al)', '땀(산성)': 'Persp(Ac)', '땀(알칼리)': 'Persp(Al)', '세탁': 'Wash', '염소수': 'Chlorine'},
-    "KO": {'일광': '일광', '땀일광(산성)': '땀일광(산)', '땀일광(알칼리)': '땀일광(알)', '땀(산성)': '땀(산)', '땀(알칼리)': '땀(알)', '세탁': '세탁', '염소수': '염소수'},
+    "EN": {'일광': 'Light', '땀일광(산성)': 'PL-Ac', '땀일광(알칼리)': 'PL-Al', '땀(산성)': 'P-Ac', '땀(알칼리)': 'P-Al', '세탁': 'Wash', '염소수': 'Chlor'},
+    "KO": {'일광': '일광', '땀일광(산성)': '땀일광산', '땀일광(알칼리)': '땀일광알', '땀(산성)': '땀산', '땀(알칼리)': '땀알', '세탁': '세탁', '염소수': '염소'},
 }
 
 
@@ -647,19 +653,25 @@ elif st.session_state.app_mode == "tab3":
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             col_configs3 = {
-                "선택": st.column_config.CheckboxColumn(label=t[lang]["col_select"], width=64),
-                "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=150)
+                "선택": st.column_config.CheckboxColumn(label="✓", help=t[lang]["col_select"], width=44),
+                "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=180)
             }
             for c in disp_cols3[2:]:
-                col_configs3[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=72)
+                col_configs3[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=60)
             if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
                 disp_cols3.append(rep_wash_col3)
-                col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=(f"Rep.{sel_cycle3.split()[0]}" if lang == "EN" else f"반복 {sel_cycle3}"), help=rep_label(sel_cycle3), width=70)
+                col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=(f"Rep.{sel_cycle3.split()[0]}" if lang == "EN" else f"반복{sel_cycle3}"), help=rep_label(sel_cycle3), width=60)
 
             if "tab3_selected_order" not in st.session_state:
                 st.session_state.tab3_selected_order = []
 
-            col_l, col_r = st.columns([1.25, 1], gap="medium")
+            # 왼쪽 칸 = 표 실제 폭(선택 44 + 염료명 180 + 숫자 칸 60씩) + 카드 안쪽 여백 → 남는 폭은 모두 오른쪽 그래프로
+            _n_num = len(disp_cols3) - 2   # 견뢰도 칸 + (반복세탁 칸)
+            _tbl_w = 44 + 180 + 60 * _n_num + 2 + 42
+            st.markdown(f"<style>[data-testid='stHorizontalBlock']:has(> div .st-key-card_res3) > div:first-child {{ flex: 0 0 {_tbl_w}px !important; width: {_tbl_w}px !important; min-width: 0 !important; }}"
+                        f"[data-testid='stHorizontalBlock']:has(> div .st-key-card_res3) {{ flex-wrap: nowrap !important; }}"
+                        f"[data-testid='stHorizontalBlock']:has(> div .st-key-card_res3) > div:last-child {{ flex: 1 1 0 !important; width: auto !important; min-width: 0 !important; }}</style>", unsafe_allow_html=True)
+            col_l, col_r = st.columns([1, 1.6], gap="medium")
             # ---------- 카드 1: 검색 결과 ----------
             with col_l:
                 with st.container(key="card_res3"):
