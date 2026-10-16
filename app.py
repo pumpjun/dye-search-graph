@@ -235,6 +235,14 @@ html, body, .stApp, .stApp button, .stApp input, .stApp textarea, .stApp select,
 .stApp .st-key-topbar button[kind="primary"], .stApp .st-key-topbar button[data-testid="stBaseButton-primary"] {
     background: #fff !important; border-color: #fff !important; color: var(--navy) !important; font-weight: 700 !important; box-shadow: 0 2px 6px rgba(0,0,0,.12) !important;
 }
+/* 상단 바 칸 폭: 로고 칸 = 사이드바 폭(300px)이라 메뉴가 메인 화면 왼쪽 선에서 시작, 메뉴 버튼 3개는 같은 폭 */
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) { flex-wrap: nowrap !important; gap: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(1) { flex: 0 0 calc(300px - 20px + 1.75rem) !important; width: auto !important; min-width: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(2) { flex: 0 0 690px !important; width: auto !important; min-width: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(3) { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(4) { flex: 0 0 140px !important; width: auto !important; min-width: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"] [data-testid="stHorizontalBlock"] { gap: 8px !important; }
+[data-testid="stSidebar"] { width: 300px !important; min-width: 300px !important; max-width: 300px !important; }
 /* 상단 바 언어 선택 */
 .st-key-topbar [data-testid="stSelectbox"] [role="group"],
 .st-key-topbar div[data-baseweb="select"] > div { background-color: rgba(255,255,255,.12) !important; border-color: transparent !important; border-radius: 9px !important; }
@@ -310,8 +318,8 @@ html, body, .stApp, .stApp button, .stApp input, .stApp textarea, .stApp select,
 .stApp [data-baseweb="input"], .stApp [data-baseweb="base-input"], .stApp div[data-baseweb="select"] > div, .stApp [data-testid="stSelectbox"] [role="group"] { border-radius: 9px !important; }
 .stApp [data-testid="stSlider"] [role="slider"] { background-color: var(--navy) !important; border-color: var(--navy) !important; box-shadow: 0 0 0 3px rgba(27,72,157,.15) !important; }
 .stApp [data-testid="stSliderThumbValue"], .stApp [data-testid="stThumbValue"] { color: var(--navy) !important; font-weight: 800 !important; }
-.stApp [data-testid="stCheckbox"] label:has(input:checked) span:first-child,
-.stApp [data-baseweb="checkbox"] input:checked + div, .stApp [data-baseweb="checkbox"] span[aria-checked="true"] { background-color: var(--navy) !important; border-color: var(--navy) !important; }
+.stApp [data-testid="stCheckbox"] label[data-baseweb="checkbox"]:has(input:checked) > span:first-child { background-color: var(--navy) !important; border-color: var(--navy) !important; }
+.stApp [data-testid="stCheckbox"] [data-testid="stMarkdownContainer"], .stApp [data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] * { background: transparent !important; color: var(--ink) !important; }
 .stApp [data-baseweb="tag"] { background-color: var(--navy) !important; border-radius: 7px !important; }
 </style>
 """
@@ -364,7 +372,7 @@ def diagnosis(max_dev):
 
 def style_fig(fig):
     fig.update_layout(font=dict(family="Pretendard, Malgun Gothic, sans-serif", color="#1d2433", size=12), plot_bgcolor="white", paper_bgcolor="white",
-                      hoverlabel=dict(bgcolor="white", bordercolor="#e2e7f0"), height=440)
+                      hoverlabel=dict(bgcolor="white", bordercolor="#e2e7f0"), height=400)
     fig.update_xaxes(showgrid=True, gridcolor="#eef1f6", linecolor="#e2e7f0")
     fig.update_yaxes(showgrid=True, gridcolor="#eef1f6", linecolor="#e2e7f0", zeroline=False)
     return fig
@@ -374,13 +382,13 @@ def style_fig(fig):
 # 4. 상단 메뉴 바 (로고 · 프로그램 선택 · 언어)
 # ==========================================
 with st.container(key="topbar"):
-    c_brand, c_nav, c_gap, c_lang = st.columns([1.55, 3.6, 1.2, 0.75], vertical_alignment="center")
+    c_brand, c_nav, c_gap, c_lang = st.columns([1, 1, 1, 1], vertical_alignment="center")
     with c_brand:
         logo_html = (f"<img src='data:image/png;base64,{header_logo_base64}'>" if header_logo_base64
                      else f"<div class='mark'>{icon('science')}</div>")
         st.markdown(f"<div class='brand'>{logo_html}<div class='t1'>{t[lang]['header']}</div></div>", unsafe_allow_html=True)
     with c_nav:
-        n1, n2, n3 = st.columns([1, 0.85, 1.25])
+        n1, n2, n3 = st.columns(3)
         n1.button(t[lang]["nav1"], icon=":material/manage_search:", use_container_width=True, key="nav_tab1",
                   type="primary" if st.session_state.app_mode == "tab1" else "secondary", on_click=set_app_mode, args=("tab1",))
         n2.button(t[lang]["nav2"], icon=":material/monitoring:", use_container_width=True, key="nav_tab2",
@@ -394,6 +402,11 @@ with st.container(key="topbar"):
 criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid', '땀일광(알칼리)': 'crit_p_light_alk',
                 '땀(산성)': 'crit_p_acid', '땀(알칼리)': 'crit_p_alk', '세탁': 'crit_wash', '염소수': 'crit_chlor'}
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
+# 반쪽 화면에 표가 다 들어가도록 표 머리글에만 쓰는 짧은 이름
+crit_short = {
+    "EN": {'일광': 'Light', '땀일광(산성)': 'PL-Ac', '땀일광(알칼리)': 'PL-Al', '땀(산성)': 'P-Ac', '땀(알칼리)': 'P-Al', '세탁': 'Wash', '염소수': 'Chlor'},
+    "KO": {'일광': '일광', '땀일광(산성)': '땀일광산', '땀일광(알칼리)': '땀일광알', '땀(산성)': '땀산', '땀(알칼리)': '땀알', '세탁': '세탁', '염소수': '염소'},
+}
 
 
 def sidebar_filters(df, mode):
@@ -556,35 +569,38 @@ elif st.session_state.app_mode == "tab2":
             if not selected_dyes2:
                 empty_box("touch_app", t[lang]["empty_title"], t[lang]["select_prompt_tab3"])
             else:
-                st.markdown("<div class='selchips'>" + "".join(
-                    f"<span class='selchip'><i style='background:{custom_colors2[i % len(custom_colors2)]}'></i>{html_lib.escape(d['name'])}</span>"
-                    for i, (_, d) in enumerate(selected_dyes2)) + "</div>", unsafe_allow_html=True)
+                c_chart, c_info = st.columns([1.7, 1], gap="large")
+                with c_info:
+                    st.markdown("<div class='selchips'>" + "".join(
+                        f"<span class='selchip'><i style='background:{custom_colors2[i % len(custom_colors2)]}'></i>{html_lib.escape(d['name'])}</span>"
+                        for i, (_, d) in enumerate(selected_dyes2)) + "</div>", unsafe_allow_html=True)
 
-                if len(selected_dyes2) >= 2:
-                    all_matrix = np.array([d["values"] for _, d in selected_dyes2])
-                    std_per_time = np.std(all_matrix, axis=0)
-                    max_dev = np.max(std_per_time)
-                    diagnosis(max_dev)
+                    if len(selected_dyes2) >= 2:
+                        all_matrix = np.array([d["values"] for _, d in selected_dyes2])
+                        std_per_time = np.std(all_matrix, axis=0)
+                        max_dev = np.max(std_per_time)
+                        diagnosis(max_dev)
 
-                fig2 = go.Figure()
-                for idx, (sheet_name, dye) in enumerate(selected_dyes2):
-                    color = custom_colors2[idx % len(custom_colors2)]
-                    label = f"{dye['name']}"
-                    x1 = [t_val for t_val in dye["times"] if t_val <= 20]
-                    y1 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val <= 20]
-                    x2 = [t_val for t_val in dye["times"] if t_val >= 25]
-                    y2 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val >= 25]
-                    fig2.add_trace(go.Scatter(x=x1, y=y1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
-                    fig2.add_trace(go.Scatter(x=x2, y=y2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
-                fig2.update_layout(
-                    xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"],
-                    xaxis=dict(tickmode='array', tickvals=[0, 5, 20, 25, 40, 80, 100]),
-                    yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40),
-                    legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=14), bgcolor="rgba(255, 255, 255, 0.85)", bordercolor="#e2e7f0", borderwidth=1)
-                )
-                fig2.add_vline(x=20, line_dash="dash", line_color="gray")
-                fig2.add_vline(x=25, line_dash="dash", line_color="gray")
-                st.plotly_chart(style_fig(fig2), use_container_width=True)
+                with c_chart:
+                    fig2 = go.Figure()
+                    for idx, (sheet_name, dye) in enumerate(selected_dyes2):
+                        color = custom_colors2[idx % len(custom_colors2)]
+                        label = f"{dye['name']}"
+                        x1 = [t_val for t_val in dye["times"] if t_val <= 20]
+                        y1 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val <= 20]
+                        x2 = [t_val for t_val in dye["times"] if t_val >= 25]
+                        y2 = [v for t_val, v in zip(dye["times"], dye["values"]) if t_val >= 25]
+                        fig2.add_trace(go.Scatter(x=x1, y=y1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
+                        fig2.add_trace(go.Scatter(x=x2, y=y2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
+                    fig2.update_layout(
+                        xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"],
+                        xaxis=dict(tickmode='array', tickvals=[0, 5, 20, 25, 40, 80, 100]),
+                        yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40),
+                        legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=14), bgcolor="rgba(255, 255, 255, 0.85)", bordercolor="#e2e7f0", borderwidth=1)
+                    )
+                    fig2.add_vline(x=20, line_dash="dash", line_color="gray")
+                    fig2.add_vline(x=25, line_dash="dash", line_color="gray")
+                    st.plotly_chart(style_fig(fig2), use_container_width=True)
 
 
 # =====================================================================
@@ -614,27 +630,29 @@ elif st.session_state.app_mode == "tab3":
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
             col_configs3 = {
-                "선택": st.column_config.CheckboxColumn(label=t[lang]["col_select"], width="small"),
+                "선택": st.column_config.CheckboxColumn(label=t[lang]["col_select"], width=64),
                 "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=150)
             }
             for c in disp_cols3[2:]:
-                col_configs3[c] = st.column_config.NumberColumn(label=t[lang][criteria_map.get(c, c)], width=80)
+                col_configs3[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=54)
             if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
                 disp_cols3.append(rep_wash_col3)
-                col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=rep_label(sel_cycle3), width=100)
+                col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=(f"Rep.{sel_cycle3.split()[0]}" if lang == "EN" else f"반복 {sel_cycle3}"), help=rep_label(sel_cycle3), width=70)
 
             if "tab3_selected_order" not in st.session_state:
                 st.session_state.tab3_selected_order = []
 
+            col_l, col_r = st.columns([1.25, 1], gap="medium")
             # ---------- 카드 1: 검색 결과 ----------
-            with st.container(key="card_res3"):
-                sec_head("checklist", t[lang]["res_title"], badge=len(f_df3))
-                st.markdown(f"<div class='hint'>{icon('touch_app')}{t[lang]['res_hint']}</div>", unsafe_allow_html=True)
-                btn_container = st.empty()
-                edited_df3 = st.data_editor(
-                    f_df3[disp_cols3], hide_index=True, use_container_width=True,
-                    column_config=col_configs3, disabled=[col for col in disp_cols3 if col != '선택'], key="tab3_editor"
-                )
+            with col_l:
+                with st.container(key="card_res3"):
+                    sec_head("checklist", t[lang]["res_title"], badge=len(f_df3))
+                    st.markdown(f"<div class='hint'>{icon('touch_app')}{t[lang]['res_hint']}</div>", unsafe_allow_html=True)
+                    btn_container = st.empty()
+                    edited_df3 = st.data_editor(
+                        f_df3[disp_cols3], hide_index=True, use_container_width=True, height=min(38 + 35 * len(f_df3), 600),
+                        column_config=col_configs3, disabled=[col for col in disp_cols3 if col != '선택'], key="tab3_editor"
+                    )
 
             curr_checked3 = edited_df3[edited_df3['선택'] == True]['염료명'].tolist()
             st.session_state.tab3_selected_order = [d for d in st.session_state.tab3_selected_order if d in curr_checked3]
@@ -655,7 +673,7 @@ elif st.session_state.app_mode == "tab3":
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
             <style>
                 body {{ margin: 0; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }}
-                .cbtn {{ flex: 1; padding: 9px 16px; font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: .2s;
+                .cbtn {{ flex: 1; padding: 9px 10px; font-size: 13.5px; white-space: nowrap; font-weight: 700; border-radius: 10px; cursor: pointer; transition: .2s;
                          display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; }}
                 #copy-sel-btn {{ background: {NAVY}; color: #fff; border: 1px solid {NAVY}; }}
                 #copy-sel-btn:hover {{ background: #133777; }}
@@ -708,56 +726,63 @@ elif st.session_state.app_mode == "tab3":
             colors = ['#FFD700', '#FF4B4B', '#1F77B4']  # Yellow, Red, Blue 순서 보장됨
 
             # ---------- 카드 2: 상용성 시뮬레이션 ----------
-            with st.container(key="card_sim3"):
-                sec_head("monitoring", t[lang]["sim_title"], badge=len(sel_dyes3) if sel_dyes3 else None)
-                if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
+            with col_r:
+                with st.container(key="card_sim3"):
+                    sec_head("monitoring", t[lang]["sim_title"], badge=len(sel_dyes3) if sel_dyes3 else None)
+                    if len(curr_checked3) > 3: st.warning(t[lang]["warn_limit"], icon=":material/warning:")
 
-                if not sel_dyes3:
-                    empty_box("touch_app", t[lang]["empty_sel_title"], t[lang]["select_prompt"])
-                else:
-                    st.markdown("<div class='selchips'>" + "".join(
-                        f"<span class='selchip'><i style='background:{colors[i % len(colors)]}'></i>{html_lib.escape(str(n))}</span>"
-                        for i, n in enumerate(sel_dyes3)) + "</div>", unsafe_allow_html=True)
-
-                    time_pts3 = ['0', '5', '20', '25', '40', '80', '100']
-                    val_cols3 = [tc for tc in time_pts3 if tc in df3.columns]
-
-                    if len(sel_dyes3) >= 2 and len(val_cols3) >= 2:
-                        all_matrix = np.array([[df3[df3['염료명'] == name].iloc[0][tc] for tc in val_cols3] for name in sel_dyes3], dtype=float)
-                        std_per_time = np.nanstd(all_matrix, axis=0)
-                        max_dev = np.nanmax(std_per_time)
-                        diagnosis(max_dev)
-
-                    if len(val_cols3) < 2:
-                        st.warning(t[lang]["err_time_data"], icon=":material/warning:")
+                    if not sel_dyes3:
+                        empty_box("touch_app", t[lang]["empty_sel_title"], t[lang]["select_prompt"])
                     else:
-                        fig3 = go.Figure()
-                        for idx, name in enumerate(sel_dyes3):
-                            row = df3[df3['염료명'] == name].iloc[0]
-                            color = colors[idx % len(colors)]
-                            label = f"{name}"
-                            t_p1 = [tc for tc in val_cols3 if int(tc) <= 20]
-                            v_p1 = [row[tc] for tc in t_p1]
-                            t_p2 = [tc for tc in val_cols3 if int(tc) >= 25]
-                            v_p2 = [row[tc] for tc in t_p2]
-                            fig3.add_trace(go.Scatter(x=t_p1, y=v_p1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
-                            fig3.add_trace(go.Scatter(x=t_p2, y=v_p2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
-                        fig3.update_layout(
-                            xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"],
-                            xaxis=dict(tickmode='array', tickvals=[int(tc) for tc in val_cols3]),
-                            yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40),
-                            legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=14), bgcolor="rgba(255, 255, 255, 0.85)", bordercolor="#e2e7f0", borderwidth=1)
-                        )
-                        fig3.add_vline(x=20, line_dash="dash", line_color="gray")
-                        fig3.add_vline(x=25, line_dash="dash", line_color="gray")
-                        st.plotly_chart(style_fig(fig3), use_container_width=True)
+                        st.markdown("<div class='selchips'>" + "".join(
+                            f"<span class='selchip'><i style='background:{colors[i % len(colors)]}'></i>{html_lib.escape(str(n))}</span>"
+                            for i, n in enumerate(sel_dyes3)) + "</div>", unsafe_allow_html=True)
 
-                    # 선택 염료 견뢰도 요약
-                    sub_head("fact_check", t[lang]["sel_summary_title"])
-                    summary_disp_cols = ['염료명'] + [c for c in criteria_list if c in df3.columns]
-                    if rep_wash_col3 and rep_wash_col3 in df3.columns:
-                        summary_disp_cols.append(rep_wash_col3)
-                    st.dataframe(sorted_sel_df[summary_disp_cols], hide_index=True, use_container_width=True, column_config=col_configs3)
+                        time_pts3 = ['0', '5', '20', '25', '40', '80', '100']
+                        val_cols3 = [tc for tc in time_pts3 if tc in df3.columns]
+
+                        if len(sel_dyes3) >= 2 and len(val_cols3) >= 2:
+                            all_matrix = np.array([[df3[df3['염료명'] == name].iloc[0][tc] for tc in val_cols3] for name in sel_dyes3], dtype=float)
+                            std_per_time = np.nanstd(all_matrix, axis=0)
+                            max_dev = np.nanmax(std_per_time)
+                            diagnosis(max_dev)
+
+                        if len(val_cols3) < 2:
+                            st.warning(t[lang]["err_time_data"], icon=":material/warning:")
+                        else:
+                            fig3 = go.Figure()
+                            for idx, name in enumerate(sel_dyes3):
+                                row = df3[df3['염료명'] == name].iloc[0]
+                                color = colors[idx % len(colors)]
+                                label = f"{name}"
+                                t_p1 = [tc for tc in val_cols3 if int(tc) <= 20]
+                                v_p1 = [row[tc] for tc in t_p1]
+                                t_p2 = [tc for tc in val_cols3 if int(tc) >= 25]
+                                v_p2 = [row[tc] for tc in t_p2]
+                                fig3.add_trace(go.Scatter(x=t_p1, y=v_p1, mode='lines', name=label, legendgroup=label, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
+                                fig3.add_trace(go.Scatter(x=t_p2, y=v_p2, mode='lines', name=label, legendgroup=label, showlegend=False, line=dict(width=3, color=color, shape='spline'), hovertemplate='%{x}' + f"{t[lang]['minute_unit']}: " + '<b>%{y}%</b><extra></extra>'))
+                            fig3.update_layout(
+                                xaxis_title=t[lang]["xaxis"], yaxis_title=t[lang]["yaxis"],
+                                xaxis=dict(tickmode='array', tickvals=[int(tc) for tc in val_cols3]),
+                                yaxis=dict(range=[0, 105]), hovermode="x unified", margin=dict(l=40, r=40, t=20, b=40),
+                                legend=dict(orientation="v", yanchor="bottom", y=0.05, xanchor="right", x=0.99, font=dict(size=14), bgcolor="rgba(255, 255, 255, 0.85)", bordercolor="#e2e7f0", borderwidth=1)
+                            )
+                            fig3.add_vline(x=20, line_dash="dash", line_color="gray")
+                            fig3.add_vline(x=25, line_dash="dash", line_color="gray")
+                            st.plotly_chart(style_fig(fig3), use_container_width=True)
+
+                        # 선택 염료 견뢰도 요약
+                        sub_head("fact_check", t[lang]["sel_summary_title"])
+                        summary_disp_cols = ['염료명'] + [c for c in criteria_list if c in df3.columns]
+                        if rep_wash_col3 and rep_wash_col3 in df3.columns:
+                            summary_disp_cols.append(rep_wash_col3)
+                        # 오른쪽 반쪽 카드에 맞게 칸 폭만 줄인 설정
+                        col_configs_sum = {k: v for k, v in col_configs3.items() if k != '선택'}
+                        col_configs_sum['염료명'] = st.column_config.TextColumn(label=t[lang]["col_name"], width=140)
+                        for c in summary_disp_cols[1:]:
+                            if c in criteria_list:
+                                col_configs_sum[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=48)
+                        st.dataframe(sorted_sel_df[summary_disp_cols], hide_index=True, use_container_width=True, column_config=col_configs_sum)
 
 # ==========================================
 # 5. 최하단 공통 요소 (제작자 정보)
