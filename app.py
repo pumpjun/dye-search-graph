@@ -30,8 +30,8 @@ t = {
         "nav1": "Fastness Matcher",
         "nav2": "Compatibility",
         "nav3": "Fastness & Compatibility",
-        "page1_sub": "Find dyes that meet every minimum fastness grade you set on the left.",
-        "page2_sub": "Compare exhaustion / fixation curves of the dyes you pick on the left.",
+        "page1_sub": "Find dyes that meet every minimum fastness grade you set above.",
+        "page2_sub": "Compare exhaustion / fixation curves of the dyes you pick below.",
         "page3_sub": "Filter by fastness, tick dyes in the table, then compare their compatibility curves.",
         "instruction_text": "Please select the desired dye groups and fastness grades from the left sidebar.",
         "sb_group_title": "1. Select Dye Group",
@@ -40,7 +40,7 @@ t = {
         "sb_spec_title": "2. Set Min Specs",
         "sb_spec_short": "Min. Fastness",
         "sb_dye_select": "Select Dyes to Compare",
-        "spec_warn": "Please select at least one dye group in the sidebar.",
+        "spec_warn": "Please select at least one dye group.",
         "search_res_hdr": ":material/manage_search: Fastness Matching Results",
         "res_title": "Matching dyes",
         "search_res_sub": "Results (Matching Dyes: {count})",
@@ -56,7 +56,7 @@ t = {
         "sel_summary_title": "Fastness of selected dyes",
         "no_match": "No dyes match the criteria.",
         "select_prompt": "Please check the **[Select]** checkbox above to compare dyes.\n\nGraph colors will be assigned as Yellow, Red, and Blue in the order selected.",
-        "select_prompt_tab3": "Please select at least one dye from the left sidebar for comparison.",
+        "select_prompt_tab3": "Please select at least one dye above for comparison.",
         "err_time_data": "Time data columns are invalid.",
         "xaxis": "Process Time (min)",
         "yaxis": "Exhaustion / Fixation Rate (%)",
@@ -96,8 +96,8 @@ t = {
         "nav1": "요구견뢰도 매칭",
         "nav2": "상용성 비교",
         "nav3": "통합 매칭 · 시뮬레이션",
-        "page1_sub": "왼쪽에서 정한 최소 견뢰도를 모두 만족하는 염료를 찾습니다.",
-        "page2_sub": "왼쪽에서 고른 염료들의 염착·고착 곡선을 비교합니다.",
+        "page1_sub": "위에서 정한 최소 견뢰도를 모두 만족하는 염료를 찾습니다.",
+        "page2_sub": "아래에서 고른 염료들의 염착·고착 곡선을 비교합니다.",
         "page3_sub": "견뢰도로 거른 뒤 표에서 염료를 체크하면 상용성 곡선을 비교합니다.",
         "instruction_text": "왼쪽 사이드바에서 원하는 염료군과 견뢰도 등급을 설정하세요.",
         "sb_group_title": "1. 염료 그룹 선택",
@@ -106,7 +106,7 @@ t = {
         "sb_spec_title": "2. 요구 스펙 설정 (이상)",
         "sb_spec_short": "요구 견뢰도 (이상)",
         "sb_dye_select": "비교 염료 선택",
-        "spec_warn": "좌측 사이드바에서 염료 그룹을 최소 하나 이상 선택해 주세요.",
+        "spec_warn": "염료 그룹을 최소 하나 이상 선택해 주세요.",
         "search_res_hdr": ":material/manage_search: 견뢰도 스펙 매칭 결과",
         "res_title": "조건을 만족하는 염료",
         "search_res_sub": "검색 결과 (만족하는 염료: {count}개)",
@@ -122,7 +122,7 @@ t = {
         "sel_summary_title": "선택 염료 견뢰도",
         "no_match": "검색 조건에 맞는 염료가 없습니다.",
         "select_prompt": "표에서 비교하고 싶은 염료의 좌측 **[선택]** 체크박스를 눌러주세요.",
-        "select_prompt_tab3": "좌측 사이드바에서 비교 분석할 염료를 1개 이상 선택해 주세요.",
+        "select_prompt_tab3": "위에서 비교 분석할 염료를 1개 이상 선택해 주세요.",
         "err_time_data": "상용성 시간 데이터 열(0, 5, 20...)이 올바르지 않습니다.",
         "xaxis": "공정 시간 (분)",
         "yaxis": "염착률 / 고착률 (%)",
@@ -237,12 +237,12 @@ html, body, .stApp, .stApp button, .stApp input, .stApp textarea, .stApp select,
 }
 /* 상단 바 칸 폭: 로고 칸 = 사이드바 폭(300px)이라 메뉴가 메인 화면 왼쪽 선에서 시작, 메뉴 버튼 3개는 같은 폭 */
 .st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) { flex-wrap: nowrap !important; gap: 0 !important; }
-.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(1) { flex: 0 0 calc(300px - 20px + 1.75rem) !important; width: auto !important; min-width: 0 !important; }
+.st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(1) { flex: 0 0 290px !important; width: auto !important; min-width: 0 !important; }
 .st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(2) { flex: 0 0 690px !important; width: auto !important; min-width: 0 !important; }
 .st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(3) { flex: 1 1 auto !important; width: auto !important; min-width: 0 !important; }
 .st-key-topbar [data-testid="stHorizontalBlock"]:has(.st-key-nav_tab1):has(.st-key-lang_dropdown) > div:nth-child(4) { flex: 0 0 140px !important; width: auto !important; min-width: 0 !important; }
 .st-key-topbar [data-testid="stHorizontalBlock"] [data-testid="stHorizontalBlock"] { gap: 8px !important; }
-[data-testid="stSidebar"] { width: 300px !important; min-width: 300px !important; max-width: 300px !important; }
+[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
 /* 상단 바 언어 선택 */
 .st-key-topbar [data-testid="stSelectbox"] [role="group"],
 .st-key-topbar div[data-baseweb="select"] > div { background-color: rgba(255,255,255,.12) !important; border-color: transparent !important; border-radius: 9px !important; }
@@ -310,6 +310,15 @@ html, body, .stApp, .stApp button, .stApp input, .stApp textarea, .stApp select,
 .empty b { display: block; font-size: 16px; color: var(--ink); margin-top: 12px; }
 .empty p { color: var(--muted); font-size: 13.5px; margin: 6px 0 0; white-space: pre-line; }
 
+/* ---------- 위쪽 조건 바 ---------- */
+[class*="st-key-card_filter"] { padding: 14px 20px 6px !important; }
+.bar-lbl { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 800; color: var(--muted); margin: 12px 0 2px; letter-spacing: .2px; }
+.bar-lbl .material-symbols-outlined { font-size: 17px; color: var(--navy); }
+[class*="st-key-card_filter"] [data-testid="stSlider"] label p, [class*="st-key-card_filter"] [data-testid="stSelectbox"] label p,
+[class*="st-key-card_filter"] [data-testid="stMultiSelect"] label p { font-size: 12.5px !important; font-weight: 700 !important; color: var(--ink) !important; white-space: nowrap; }
+[class*="st-key-card_filter"] [data-testid="stPopover"] button { border-radius: 10px !important; border: 1px solid #c9d6ee !important; background: var(--soft) !important; color: var(--navy) !important; font-weight: 700 !important; }
+[data-testid="stPopoverBody"] { min-width: 560px; border-radius: 14px !important; }
+[data-testid="stPopoverBody"] [data-testid="stCheckbox"] label p { font-size: 13px !important; }
 /* ---------- 위젯 ---------- */
 .stApp button[kind="primary"], .stApp button[data-testid="stBaseButton-primary"] { background: var(--navy) !important; border-color: var(--navy) !important; color: #fff !important; border-radius: 10px !important; font-weight: 700 !important; }
 .stApp [data-testid="stSidebar"] button { border-radius: 10px !important; }
@@ -404,45 +413,50 @@ criteria_map = {'일광': 'crit_light', '땀일광(산성)': 'crit_p_light_acid'
 criteria_list = ['일광', '땀일광(산성)', '땀일광(알칼리)', '땀(산성)', '땀(알칼리)', '세탁', '염소수']
 # 반쪽 화면에 표가 다 들어가도록 표 머리글에만 쓰는 짧은 이름
 crit_short = {
-    "EN": {'일광': 'Light', '땀일광(산성)': 'PL-Ac', '땀일광(알칼리)': 'PL-Al', '땀(산성)': 'P-Ac', '땀(알칼리)': 'P-Al', '세탁': 'Wash', '염소수': 'Chlor'},
-    "KO": {'일광': '일광', '땀일광(산성)': '땀일광산', '땀일광(알칼리)': '땀일광알', '땀(산성)': '땀산', '땀(알칼리)': '땀알', '세탁': '세탁', '염소수': '염소'},
+    "EN": {'일광': 'Light', '땀일광(산성)': 'P.Light(Ac)', '땀일광(알칼리)': 'P.Light(Al)', '땀(산성)': 'Persp(Ac)', '땀(알칼리)': 'Persp(Al)', '세탁': 'Wash', '염소수': 'Chlorine'},
+    "KO": {'일광': '일광', '땀일광(산성)': '땀일광(산)', '땀일광(알칼리)': '땀일광(알)', '땀(산성)': '땀(산)', '땀(알칼리)': '땀(알)', '세탁': '세탁', '염소수': '염소수'},
 }
 
 
 def sidebar_filters(df, mode):
-    """사이드바: ① 염료 그룹 ② 요구 견뢰도 ③ 반복세탁 (탭1·탭3 공통, 위젯 key는 기존과 동일)"""
+    """메인 화면 위쪽 조건 바: 염료 그룹(펼침 메뉴) · 요구 견뢰도 · 반복세탁 (탭1·탭3 공통, 위젯 key는 기존과 동일)"""
     all_groups = list(df['염료그룹'].dropna().unique()) if '염료그룹' in df.columns else []
     for g in all_groups:
         if f"grp_{g}_{mode}" not in st.session_state:
             st.session_state[f"grp_{g}_{mode}"] = True if g == "Sunfix SPD conc." else False
     n_on = sum(1 for g in all_groups if st.session_state.get(f"grp_{g}_{mode}"))
-    side_step(1, t[lang]["sb_group_short"], f"{n_on} / {len(all_groups)}")
-    st.sidebar.checkbox(t[lang]["select_all"], value=False, key=f"chk_all_{mode}",
-                        on_change=toggle_all_groups, args=(mode, all_groups))
-    sc1, sc2 = st.sidebar.columns(2)
     selected_groups = []
-    for i, group in enumerate(all_groups):
-        target_col = sc1 if i % 2 == 0 else sc2
-        if target_col.checkbox(str(group), key=f"grp_{group}_{mode}"):
-            selected_groups.append(group)
+    with st.container(key=f"card_filter_{mode}"):
+        # 1줄: 염료 그룹 선택 + 선택된 그룹 칩
+        g_btn, g_chips = st.columns([1.25, 6], vertical_alignment="center")
+        with g_btn:
+            with st.popover(f"{t[lang]['sb_group_short']}  ·  {n_on} / {len(all_groups)}", icon=":material/category:", use_container_width=True):
+                st.checkbox(t[lang]["select_all"], value=False, key=f"chk_all_{mode}",
+                            on_change=toggle_all_groups, args=(mode, all_groups))
+                gcols = st.columns(3)
+                for i, group in enumerate(all_groups):
+                    if gcols[i % 3].checkbox(str(group), key=f"grp_{group}_{mode}"):
+                        selected_groups.append(group)
+        with g_chips:
+            chips = "".join(f"<span class='fchip grp'>{html_lib.escape(str(g))}</span>" for g in selected_groups)
+            if not chips: chips = f"<span class='fchip none'>{t[lang]['spec_warn']}</span>"
+            st.markdown(f"<div class='fchips' style='margin:0'>{chips}</div>", unsafe_allow_html=True)
 
-    st.sidebar.markdown("---")
-    side_step(2, t[lang]["sb_spec_short"])
-    req = {}
-    for c in criteria_list:
-        if c in df.columns:
+        # 2줄: 요구 견뢰도 슬라이더 7개 + 반복세탁
+        st.markdown(f"<div class='bar-lbl'>{icon('tune')}{t[lang]['sb_spec_short']}</div>", unsafe_allow_html=True)
+        crit_in = [c for c in criteria_list if c in df.columns]
+        scols = st.columns(len(crit_in) + 2, gap="medium")
+        req = {}
+        for i, c in enumerate(crit_in):
             display_label = t[lang][criteria_map.get(c, c)]
             max_val = 7.0 if c == '일광' else 5.0
-            req[c] = st.sidebar.slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_{mode}")
-
-    st.sidebar.markdown("---")
-    side_step(3, t[lang]["rep_wash_title"])
-    cycles_list = cycle_opts_en if lang == "EN" else cycle_opts_ko
-    sel_cycle = st.sidebar.selectbox(t[lang]["rep_wash_times_label"], cycles_list, key=f"sel_rep_wash_{mode}")
-    rep_wash_min, rep_wash_col = None, None
-    if sel_cycle != t[lang]["rep_wash_none"]:
-        rep_wash_min = st.sidebar.slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key=f"sld_rep_wash_{mode}")
-        rep_wash_col = get_excel_cycle_string(sel_cycle, lang)
+            req[c] = scols[i].slider(display_label, 1.0, max_val, 1.0, 0.5, key=f"sld_{c}_{mode}")
+        cycles_list = cycle_opts_en if lang == "EN" else cycle_opts_ko
+        sel_cycle = scols[len(crit_in)].selectbox(t[lang]["rep_wash_title"], cycles_list, key=f"sel_rep_wash_{mode}")
+        rep_wash_min, rep_wash_col = None, None
+        if sel_cycle != t[lang]["rep_wash_none"]:
+            rep_wash_min = scols[len(crit_in) + 1].slider(t[lang]["rep_wash_grade_label"], 1.0, 5.0, 1.0, 0.5, key=f"sld_rep_wash_{mode}")
+            rep_wash_col = get_excel_cycle_string(sel_cycle, lang)
     return selected_groups, req, sel_cycle, rep_wash_min, rep_wash_col
 
 
@@ -485,7 +499,6 @@ if st.session_state.app_mode == "tab1":
             st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df1 = apply_filters(df1, selected_groups1, req1, rep_wash_col1, rep_wash_min1)
-            filter_chips(selected_groups1, req1, rep_wash_col1, rep_wash_min1, rep_label(sel_cycle1))
 
             disp_cols1 = ['염료명'] + [c for c in criteria_list if c in f_df1.columns]
             col_configs1 = {"염료명": st.column_config.TextColumn(label=t[lang]["col_name"])}
@@ -554,14 +567,19 @@ elif st.session_state.app_mode == "tab2":
             app2_data = None
 
     if app2_data:
-        side_step(1, t[lang]["sb_dye_select"])
         selected_dyes2 = []
-        for sheet_name, dyes in app2_data.items():
-            dye_names = [d["name"] for d in dyes]
-            selections = st.sidebar.multiselect(f":material/list: {sheet_name}", options=dye_names, key=f"tab2_ms_{sheet_name}")
-            for sel in selections:
-                for d in dyes:
-                    if d["name"] == sel: selected_dyes2.append((sheet_name, d))
+        with st.container(key="card_filter_tab2"):
+            st.markdown(f"<div class='bar-lbl' style='margin-top:0'>{icon('palette')}{t[lang]['sb_dye_select']}</div>", unsafe_allow_html=True)
+            sheets = list(app2_data.items())
+            per_row = min(len(sheets), 4)
+            for r0 in range(0, len(sheets), per_row):
+                mcols = st.columns(per_row, gap="medium")
+                for j, (sheet_name, dyes) in enumerate(sheets[r0:r0 + per_row]):
+                    dye_names = [d["name"] for d in dyes]
+                    selections = mcols[j].multiselect(f":material/list: {sheet_name}", options=dye_names, key=f"tab2_ms_{sheet_name}")
+                    for sel in selections:
+                        for d in dyes:
+                            if d["name"] == sel: selected_dyes2.append((sheet_name, d))
 
         custom_colors2 = ['#FFD700', '#FF4B4B', '#1F77B4', '#9467bd', '#2ca02c', '#ff7f0e', '#e377c2']
         with st.container(key="card_sim2"):
@@ -625,7 +643,6 @@ elif st.session_state.app_mode == "tab3":
             st.warning(t[lang]["spec_warn"], icon=":material/warning:")
         else:
             f_df3 = apply_filters(df3, selected_groups3, req3, rep_wash_col3, rep_wash_min3)
-            filter_chips(selected_groups3, req3, rep_wash_col3, rep_wash_min3, rep_label(sel_cycle3))
 
             f_df3.insert(0, '선택', False)
             disp_cols3 = ['선택', '염료명'] + [c for c in criteria_list if c in f_df3.columns]
@@ -634,7 +651,7 @@ elif st.session_state.app_mode == "tab3":
                 "염료명": st.column_config.TextColumn(label=t[lang]["col_name"], width=150)
             }
             for c in disp_cols3[2:]:
-                col_configs3[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=54)
+                col_configs3[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=72)
             if rep_wash_col3 and rep_wash_col3 in f_df3.columns:
                 disp_cols3.append(rep_wash_col3)
                 col_configs3[rep_wash_col3] = st.column_config.NumberColumn(label=(f"Rep.{sel_cycle3.split()[0]}" if lang == "EN" else f"반복 {sel_cycle3}"), help=rep_label(sel_cycle3), width=70)
@@ -781,10 +798,10 @@ elif st.session_state.app_mode == "tab3":
                         col_configs_sum['염료명'] = st.column_config.TextColumn(label=t[lang]["col_name"], width=140)
                         for c in summary_disp_cols[1:]:
                             if c in criteria_list:
-                                col_configs_sum[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=48)
+                                col_configs_sum[c] = st.column_config.NumberColumn(label=crit_short[lang].get(c, c), help=t[lang][criteria_map.get(c, c)], width=62)
                         st.dataframe(sorted_sel_df[summary_disp_cols], hide_index=True, use_container_width=True, column_config=col_configs_sum)
 
 # ==========================================
 # 5. 최하단 공통 요소 (제작자 정보)
 # ==========================================
-st.sidebar.markdown(f"<div class='side-foot'>{t[lang]['created_by']}</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='side-foot'>{t[lang]['created_by']}</div>", unsafe_allow_html=True)
